@@ -12,12 +12,13 @@ EXAMPLE:
 
 ![example.png](./example.png)
 
+Store's the modules related to Graphics.
 
-[run.sh](./run.sh) This is the wrapper for python to run the qs.py file
+[src/Graphics](./src/Graphics/)
 
-[src/Graphics](./src/Graphics/) Store's the modules related to Graphics.
-  
-[examples/](./examples/) This is where examples located
+ This is where examples located
+
+[examples/](./examples/)
 
 Implementation
   Default: [Python](https://python.org)
