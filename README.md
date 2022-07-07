@@ -4,21 +4,13 @@ Ql Programming Language written in Python
 SERVER:
 
 
-![server.png](./server.png)
+![server.png](./screenshots/server.png)
 
 
 EXAMPLE:
 
 
-![example.png](./example.png)
-
-Store's the modules related to Graphics.
-
-[src/Graphics](./src/Graphics/)
-
- This is where examples located
-
-[examples/](./examples/)
+![example.png](./screenshots/example.png)
 
 Implementation
   Default: [Python](https://python.org)
