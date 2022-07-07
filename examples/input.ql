@@ -1,8 +1,7 @@
-DEFINE MAIN
-{
-  // take input from the user 
+DEFINE MAIN %
+  * take input from the user 
   INPUT ">> "
-}
+%
 
-// run the main function
+* run the main function
 RUN MAIN

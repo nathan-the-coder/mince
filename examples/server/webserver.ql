@@ -1,11 +1,11 @@
 
-DEFINE MAIN {
+DEFINE MAIN %
   MKHTML
+  PRINT "Initializing server at 'localhost:8080'\n"
   SERVE::INIT
 
-  FORMAT "Init server success at 'localhost:8080'"
 
-  SERVE::RUN
-}
+  SERVE::OPEN
+%
 
 RUN MAIN

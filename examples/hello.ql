@@ -1,24 +1,17 @@
+* TODO: BETTER SYNTAX
+DEFINE MAIN % 
+  PRINT "Hello World\n" 
+%
 
-// TODO: BETTER SYNTAX
-DEFINE MAIN { 
-  // with newline
-  FORMAT "Hello World" 
-
-  // without newline
-  OUTPUT "Hello World"
-}
-
-// run the function main
+* run the function main
 RUN MAIN 
 
-foo=0
-bar=1 
+foo = 0
+bar = 1 
 
-test=1
-
-IF test == 1 {
-  FORMAT "YES"
-}
-ELSE {
-  OUTPUT "NO"
-}
+test = 1
+IF test == 1 %
+  PRINT "Yes\n"
+% ELSE %
+  PRINT "No\n"
+%

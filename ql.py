@@ -3,13 +3,13 @@
 # returns the current character while skipping over comments
 import sys
 import os
-import src.Web as w
-
+import log
+import qls.Web.__main__ as w
 
 def Look():
     # comments are entered by # and exited by \n or \0
     global pc
-    if source[pc] == '//':
+    if source[pc] == '*':
         while source[pc] != '\n' and source[pc] != '\0':
             # scan over comments here
             pc += 1
@@ -234,7 +234,6 @@ def DoWhile(act):
     # scan over inactive block and leave while
     Block([False])
 
-
 def DoInput(act):
     ident = TakeNextAlNum()
     e = Expression(act)
@@ -309,13 +308,16 @@ def DoReturn(act):
 
 
 def DoSrvRun():
-    httpd.serve_forever()
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        log.Log(1, "Stopping Server....")
 
 
 def DoServe(act):
     global httpd
+    log.Log(2, "Run Server on it's Directory or else...")
     httpd = w.HTTPServer(("localhost", 8080), w.web_server)
-
 
 def DoBreak(act):
     if act[0]:
@@ -371,12 +373,9 @@ def DoMkTemp():
         f.write("    </body>\n")
         f.write("</html>\n")
 
-
 def Statement(act):
-    if TakeString("OUTPUT"):
+    if TakeString("PRINT"):
         DoPrint(act)
-    elif TakeString("FORMAT"):
-        DoFormat(act)
     elif TakeString("EXIT"):
         DoExit(act)
     elif TakeString("INPUT"):
@@ -389,10 +388,12 @@ def Statement(act):
         DoWhile(act)
     elif TakeString("MKHTML"):
         DoMkTemp()
-    elif TakeString("SERVE::INIT"):
-        DoServe(act)
-    elif TakeString("SERVE::RUN"):
-        DoSrvRun()
+    elif TakeString("SERVE"):
+        if TakeString("::"):
+            if TakeString("INIT"):
+                DoServe(act)
+            if TakeString("OPEN"):
+                DoSrvRun()
     elif TakeString("BREAK"):
         DoBreak(act)
     elif TakeString("RUN"):
@@ -404,8 +405,8 @@ def Statement(act):
 
 
 def Block(act):
-    if TakeNext("{"):
-        while not TakeNext("}"):
+    if TakeNext("%"):
+        while not TakeNext("%"):
             Block(act)
     else:
         Statement(act)
@@ -415,6 +416,11 @@ def Program():
     act = [True]
     while Next() != '\0':
         Block(act)
+
+def Prompt():
+    prompt = input("> ")
+
+    print(prompt)
 
 
 def Error(text):
@@ -436,12 +442,14 @@ if len(sys.argv) < 2:
     sys.exit(1)
 
 try:
-    f = open(sys.argv[1], 'r')																					# open source file
+    f = open(sys.argv[1], 'r')
+
 except:
     print("ERROR: Can't find source file \'" + sys.argv[1] + "\'.")
     sys.exit(1)
-source = f.read() + '\0'
+
 # append a null termination
+source = f.read() + '\0'
 f.close()
 
 Program()
