@@ -1,0 +1,9 @@
+;; a simple major mode, ql-mode
+
+(setq ql-highlights
+      '(("DEFINE\\|SERVE" . 'font-lock-function-name-face)
+        ("OUTPUT\\|FORMAT\\|INIT\\|RUN" . 'font-lock-constant-face)))
+
+(define-derived-mode ql-mode fundamental-mode "ql"
+  "major mode for editing ql language source code."
+  (setq font-lock-defaults '(ql-highlights)))
