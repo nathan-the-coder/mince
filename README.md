@@ -31,8 +31,13 @@ Implementation
 
 1. Cloning repos on ~/repo.
 
+
 > clone keyword
-> GIT::CLONE "git, gitlab..." "user/repo"
+```ql
+
+GIT::CLONE "git, gitlab..." "user/repo"
+
+```
 
 ## Disclaimer
 > you need to be on the directory, where the server will be for ql to gen files on that dir only
