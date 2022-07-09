@@ -10,7 +10,7 @@ SERVER:
 EXAMPLE:
 
 
-![example.png](./screenshots/example.png)
+![hello.png](./screenshots/hello.png)
 
 Implementation
   Default: [Python](https://python.org)
