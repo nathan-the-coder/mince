@@ -16,13 +16,6 @@ Implementation
   Default: [Python](https://python.org)
 
 
-> ### Implemented:
->  - Web Server (PS: You still need to for now manually create a style.css, edit the index.html
->  and also manually create the main.js :) )
->  - INPUT function
-
-
-
 > ### NEW
 >  1. added [setup.py](./setup.py) to install additional modules and the python script itself.
 >  2. added [log.py](./scripts/log.py) - used for pretty printing error's, warning's and to print msg.
