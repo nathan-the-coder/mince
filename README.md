@@ -17,9 +17,9 @@ Implementation
 
 
 > Implemented:
-  - Web Server (PS: You still need to for now manually create a style.css, edit the index.html
-  and also manually create the main.js :) )
-  - INPUT function
+>  - Web Server (PS: You still need to for now manually create a style.css, edit the index.html
+>  and also manually create the main.js :) )
+>  - INPUT function
 
 ### NEW
   1. added [setup.py](./setup.py) to install additional modules and the python script itself.
