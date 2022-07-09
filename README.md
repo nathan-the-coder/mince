@@ -26,9 +26,8 @@ Implementation
 
 
 
-> clone keyword
 ```ql
-
+* Cloning the repo
 GIT::CLONE "git, gitlab..." "user/repo"
 
 ```
