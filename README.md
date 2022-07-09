@@ -28,9 +28,11 @@ Implementation
   4. added [git.py](./scripts/git.py) - used to add more git integration to ql.
   5. fixes the server functions to work properly
   6. Successfully Implemented First git integration 
-    1. Cloning repos on ~/repo.
-     > clone keyword
-     > GIT::CLONE <git, gitlab...> "<user>/<repo>"
+
+1. Cloning repos on ~/repo.
+
+> clone keyword
+> GIT::CLONE "git, gitlab..." "user/repo"
 
 ## Disclaimer
 > you need to be on the directory, where the server will be for ql to gen files on that dir only
