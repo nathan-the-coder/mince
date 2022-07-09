@@ -1,4 +1,9 @@
-# QLang
+<p align="center">
+  <a href="https://github.com/paradise-theme/paradise/stargazers"><img src="https://img.shields.io/github/stars/nathan-the-coder/QLang?colorA=151515&colorB=B66467&style=for-the-badge&logo=starship"></a>
+  <a href="https://github.com/paradise-theme/paradise/issues"><img src="https://img.shields.io/github/issues/nathan-the-coder/QLang?colorA=151515&colorB=8C977D&style=for-the-badge&logo=bugatti"></a>
+  <a href="https://github.com/paradise-theme/paradise/network/members"><img src="https://img.shields.io/github/forks/nathan-the-coder/QLang?colorA=151515&colorB=D9BC8C&style=for-the-badge&logo=github"></a>
+</p>
+
 Ql Programming Language written in Python
 
 ### Examples
