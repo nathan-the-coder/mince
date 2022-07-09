@@ -1,16 +1,31 @@
 # QLang
 Ql Programming Language written in Python
 
-SERVER:
+### Examples
+```
+* hello.ql
 
+* TODO: BETTER SYNTAX
+DEFINE MAIN % 
+  PRINT "Hello World\n" 
+%
 
-![server.png](./screenshots/server.png)
+* run the function main
+RUN MAIN 
 
+foo = 0
+bar = 1 
 
-EXAMPLE:
+test = 1
+IF test == 1 %
+  PRINT "Yes\n"
+% ELSE %
+  PRINT "No\n"
+%
+```
 
-
-![hello.png](./screenshots/hello.png)
+#### More examples in 
+[examples](./examples/)
 
 Implementation
   Default: [Python](https://python.org)
