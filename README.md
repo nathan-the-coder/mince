@@ -4,8 +4,6 @@
   <a href="https://github.com/paradise-theme/paradise/network/members"><img src="https://img.shields.io/github/forks/nathan-the-coder/QLang?colorA=151515&colorB=D9BC8C&style=for-the-badge&logo=github"></a>
 </p>
 
-Ql Programming Language written in Python
-
 ### Examples
 ```
 * hello.ql
