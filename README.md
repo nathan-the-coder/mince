@@ -25,8 +25,9 @@ Implementation
   1. added [setup.py](./setup.py) to install additional modules and the python script itself.
   2. added [log.py](./scripts/log.py) - used for pretty printing error's, warning's and to print msg.
   3. added [shop.py](./scripts/shop.py) - used to run shell commands in python and used in [setup.py](./setup.py). 
-  4. fixes the server functions to work properly
-  5. Successfully Implemented First git integration 
+  4. added [git.py](./scripts/git.py) - used to add more git integration to ql.
+  5. fixes the server functions to work properly
+  6. Successfully Implemented First git integration 
     1. Cloning repos on ~/repo.
 
 
