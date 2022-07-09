@@ -5,13 +5,13 @@ import time
 
 def clone(src, dest):
     try:
-        if os.system(f"git clone {src} {dest}") != 0:
+        if os.system(f"git clone -q {src} {dest}") != 0:
             _in = input("You I remove the directory? ")
             if _in == "yes":
                 log.Log(2, "Removing directory!")
                 time.sleep(3)
                 shop.shutil.rmtree(dest)
-                os.system(f"git clone {src} {dest}")
+                os.system(f"git clone -q {src} {dest}")
             elif _in == "no":
                 log.Log(3, "Cannot Proceed: Directory Exists")
                 exit(1)

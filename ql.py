@@ -452,7 +452,7 @@ pc = 0
 variable = {}
 
 if len(sys.argv) < 2:
-    print('USAGE: qs.py <sourcefile>')
+    print('USAGE: ql.py <sourcefile>')
     sys.exit(1)
 
 try:
