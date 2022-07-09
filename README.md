@@ -16,10 +16,12 @@ Implementation
   Default: [Python](https://python.org)
 
 
-> Implemented:
+> ### Implemented:
 >  - Web Server (PS: You still need to for now manually create a style.css, edit the index.html
 >  and also manually create the main.js :) )
 >  - INPUT function
+
+
 
 > ### NEW
 >  1. added [setup.py](./setup.py) to install additional modules and the python script itself.
@@ -30,12 +32,14 @@ Implementation
 >  6. Successfully Implemented First git integration 
 
 
+
 > clone keyword
 ```ql
 
 GIT::CLONE "git, gitlab..." "user/repo"
 
 ```
+
 
 ## Disclaimer
 > you need to be on the directory, where the server will be for ql to gen files on that dir only
