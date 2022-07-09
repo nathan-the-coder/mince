@@ -20,8 +20,12 @@ def cp(src, dest):
 
 def install(mode, src, dest):
     os.system("clear")
-    time.sleep(2)
-    os.system(f"install -Dm{mode} {src} {dest}")
+    time.sleep(1)
+    if os.path.isdir(src):
+        os.system(f"install -d {src} {dest}")
+    else:
+        os.system(f"install -Dm{mode} {src} {dest}")
+
     print(Fore.GREEN + "[INSTALL]: \n"
                      + Fore.CYAN 
                      + "  [MODE]: "
@@ -35,7 +39,8 @@ def install(mode, src, dest):
                      + "  [DEST]: "
                      + Fore.WHITE
                      + dest + "\n")
-    time.sleep(2)
+    time.sleep(1)
+    print(Fore.GREEN + "[SUCCESS]: " + Fore.WHITE + "Sucessfully Installed")
 
 def rem(path):
     if os.path.isdir(path):
