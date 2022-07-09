@@ -4,6 +4,7 @@
 import sys
 import os
 import log
+import git
 import qls.Web.__main__ as w
 
 def Look():
@@ -124,12 +125,12 @@ def MathFactor(act):
     elif IsDigit(Next()):
         while IsDigit(Look()):
             m = 10 * m + ord(Take()) - ord('0')
-    elif TakeString("val("):
-        s = String(act)
-        if act[0] and s.isdigit():
-            m = int(s)
-        if not TakeNext(')'):
-            Error("missing ')'")
+    # elif TakeString("val("):
+    #     s = String(act)
+    #     if act[0] and s.isdigit():
+    #         m = int(s)
+    #     if not TakeNext(')'):
+    #         Error("missing ')'")
     else:
         ident = TakeNextAlNum()
         if ident not in variable or variable[ident][0] != 'i':
@@ -185,13 +186,13 @@ def String(act):
             else:
                 s += Take()
     # str(...)
-    elif TakeString("str("):
-        s = str(MathExpression(act))
-        if not TakeNext(')'):
-            Error("missing ')'")
-    elif TakeString("input()"):
-        if act[0]:
-            s = input()
+    # elif TakeString("str("):
+    #     s = str(MathExpression(act))
+    #     if not TakeNext(')'):
+    #         Error("missing ')'")
+    # elif TakeString("input()"):
+    #     if act[0]:
+    #         s = input()
     else:
         ident = TakeNextAlNum()
         if ident in variable and variable[ident][0] == 's':
@@ -289,6 +290,8 @@ def DoAssign(act):
     ident = TakeNextAlNum()
     if not TakeNext('=') or ident == "":
         Error("unknown statement")
+    elif TakeString("GIT::CLONE"):
+        return
     e = Expression(act)
     if act[0] or ident not in variable:
         # assert initialization even if block is inactive
@@ -355,6 +358,19 @@ def DoExit(act):
     elif act[0] and ident == "":
         exit()
 
+def Clone(act):
+    global pc
+    ident = TakeNextAlNum()
+    e = Expression(act)
+
+
+    if act[0] and ident not in variable:
+        variable[ident] = e
+        # print(variable)
+        li = list(variable[ident])
+        git.clone(f"https://github.com/{str(li[1])}", f"/home/nathan/repo/{li[1]}")
+        # print(str(li[1]))
+
 
 def DoMkTemp():
     os.system("touch style.css")
@@ -388,6 +404,10 @@ def Statement(act):
         DoWhile(act)
     elif TakeString("MKHTML"):
         DoMkTemp()
+    elif TakeString("GIT"):
+        if TakeString("::"):
+            if TakeString("CLONE"):
+                Clone(act)
     elif TakeString("SERVE"):
         if TakeString("::"):
             if TakeString("INIT"):
@@ -417,12 +437,6 @@ def Program():
     while Next() != '\0':
         Block(act)
 
-def Prompt():
-    prompt = input("> ")
-
-    print(prompt)
-
-
 def Error(text):
     s = source[:pc].rfind("\n") + 1
     e = source.find("\n", pc)
@@ -450,6 +464,8 @@ except:
 
 # append a null termination
 source = f.read() + '\0'
+
+
 f.close()
 
 Program()

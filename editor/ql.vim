@@ -37,7 +37,7 @@ syn region qlDescBlock start="%" end="%" fold transparent contains=qlNumber, qlF
 syn keyword qlFunction DEFINE RUN OPEN INIT INPUT
 syn keyword qlConditional IF ELSE 
 syn keyword qlRepeat  WHILE
-syn keyword qlStatement PRINT SERVE 
+syn keyword qlStatement PRINT SERVE GIT CLONE 
 syn keyword qlBuiltin BREAK EXIT 
 syn keyword qlOperator OR AND TRUE FALSE 
 

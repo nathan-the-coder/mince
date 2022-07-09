@@ -1,5 +1,6 @@
 import os 
 import shutil
+import time
 from colorama import Fore
 
 def cd(path):
@@ -18,6 +19,8 @@ def cp(src, dest):
     print(Fore.GREEN + "[COPY]" + Fore.WHITE + ": " + dest)
 
 def install(mode, src, dest):
+    os.system("clear")
+    time.sleep(2)
     os.system(f"install -Dm{mode} {src} {dest}")
     print(Fore.GREEN + "[INSTALL]: \n"
                      + Fore.CYAN 
@@ -32,6 +35,7 @@ def install(mode, src, dest):
                      + "  [DEST]: "
                      + Fore.WHITE
                      + dest + "\n")
+    time.sleep(2)
 
 def rem(path):
     if os.path.isdir(path):
