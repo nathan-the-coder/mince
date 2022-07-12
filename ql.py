@@ -444,6 +444,8 @@ def Error(text):
           str(source[:pc].count("\n") + 1) + ": '" + source[s:pc] + "_" + source[pc:e] + "'\n")
     sys.exit(1)
 
+
+
 # --------------------------------------------------------------------------------------------------
 
 
@@ -452,18 +454,24 @@ pc = 0
 variable = {}
 
 if len(sys.argv) < 2:
-    print('USAGE: ql.py <sourcefile>')
+    print('USAGE: ql [options] [file]')
     sys.exit(1)
 
 try:
     f = open(sys.argv[1], 'r')
 
-except:
+except FileNotFoundError:
     print("ERROR: Can't find source file \'" + sys.argv[1] + "\'.")
     sys.exit(1)
 
 # append a null termination
 source = f.read() + '\0'
+
+# Dectect file extension
+if sys.argv[1].endswith('.ql'):
+    pass
+else:
+    log.Log(3, 'Source file is not support!')
 
 
 f.close()

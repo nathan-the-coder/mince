@@ -2,6 +2,7 @@ import os
 import shutil
 import time
 from colorama import Fore
+import log
 
 def cd(path):
     """Change directory to path"""
@@ -47,3 +48,6 @@ def rem(path):
         os.removedirs(path)
     else:
         os.remove(path)
+
+if __name__ == "__main__":
+    log.Log(3, "This file is not a standalone file, it cannot be runned directly")

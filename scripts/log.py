@@ -18,3 +18,5 @@ class Log:
         elif msg == "Hello":
             lvl = 1
 
+if __name__ == "__main__":
+    Log(3, "This file is not a standalone file, it cannot be runned directly")

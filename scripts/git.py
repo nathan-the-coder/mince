@@ -25,3 +25,6 @@ def clone(src, dest):
     finally:
         print("\n")
         log.Log(1, "Successfully Cloned")
+
+if __name__ == "__main__":
+    log.Log(3, "This file is not a standalone file, it cannot be runned directly")
