@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from doctest import OutputChecker
 import sys
 
 from scripts import log
@@ -135,9 +134,9 @@ def MathFactor(act):
     else:
         ident = TakeNextAlNum()
         if ident not in variable or variable[ident][0] != 'i':
-            if ident == "False":
+            if ident == "false":
                 return False
-            elif ident == "True":
+            elif ident == "true":
                 return True
             else:
                 Error("unknown variable")
@@ -299,12 +298,16 @@ def DoAssign(act):
     global vars
     ident = TakeNextAlNum()
     if not TakeNext('=') or ident == "":
-        Error("unknown statement")
+        if ident == "include":
+            pass
+        else:
+            Error("unknown statement")
 
-    if ident == "False":
+    if ident == "false":
         return 1
-    elif ident == "True":
+    elif ident == "true":
         return 0
+
     
     e = Expression(act)
     if act[0] or ident not in variable:
@@ -339,6 +342,9 @@ def print_stack():
     elif ident == "stdout":
         print(stdout)
 
+def not_implemented():
+    if f.readline() == "include << game":
+        Error("Libraries are not implemented yet!")
 
 def DoBreak(act):
     if act[0]:
@@ -434,6 +440,8 @@ except FileNotFoundError:
 
 # append a null termination
 source = f.read() + '\0'
+
+
 
 # Dectect file extension
 if sys.argv[1].endswith('.sn'):

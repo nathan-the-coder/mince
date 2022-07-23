@@ -1,13 +1,8 @@
 # define the method print
-method << print [
-    stdout << "Hello World"
-]
+method << print [ stdout << "Hello World" ]
 
 # define the method main
-method << main [
-    stdout << "Hello?"
-
-]
+method << main [ stdout << "Hello?" ]
 
 # call the method 'print' from the stack
 stack << print

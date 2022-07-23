@@ -1,0 +1,15 @@
+include << game
+
+method << main [
+    game >> init true
+    player = game >> load "player.jpg"
+
+    enemy = game >> load "enemy.jpg"
+
+
+
+    game >> mainloop
+]
+
+
+stack << main
