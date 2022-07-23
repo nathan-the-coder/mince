@@ -378,10 +378,6 @@ def Statement(act):
         DoGoSub(act)
     elif TakeString("method " + append):
         DoSubDef()
-    elif TakeString("include " + out):
-        DoInclude()
-    elif TakeString("game" + out):
-        Game()
     elif TakeString("dump " + out):
         print_stack()
     else:
