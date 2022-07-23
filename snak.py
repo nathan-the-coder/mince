@@ -1,6 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
+import os
 import sys
+
+from numpy import var
+import pygame
 
 from scripts import log
 
@@ -240,19 +244,6 @@ def DoWhile(act):
     # scan over inactive block and leave while
     Block([False])
 
-def DoInput(act):
-    ident = TakeNextAlNum()
-    e = Expression(act)
-    while True:
-        try:
-            _in = input(e[1])
-            if _in == "EXIT":
-                exit(_in[1])
-        except KeyboardInterrupt:
-            print("\nExiting...\n")
-            exit()
-    variable[ident] = e
-
 
 def DoIfElse(act):
     b = BooleanExpression(act)
@@ -274,7 +265,7 @@ def DoGoSub(act):
     global pc, stack
     ident = TakeNextAlNum()
     if ident not in variable or variable[ident][0] != 'p':
-        Error("unknown subroutine")
+        Error("unknown method")
     ret = pc
     pc = variable[ident][1]
     Block(act)
@@ -288,7 +279,7 @@ def DoSubDef():
     global methods
     ident = TakeNextAlNum()
     if ident == "":
-        Error("missing subroutine identifier")
+        Error("missing method identifier")
     variable[ident] = ('p', pc)
     methods += 1
     Block([False])
@@ -299,6 +290,8 @@ def DoAssign(act):
     ident = TakeNextAlNum()
     if not TakeNext('=') or ident == "":
         if ident == "include":
+            pass
+        elif ident == "game":
             pass
         else:
             Error("unknown statement")
@@ -342,9 +335,6 @@ def print_stack():
     elif ident == "stdout":
         print(stdout)
 
-def not_implemented():
-    if f.readline() == "include << game":
-        Error("Libraries are not implemented yet!")
 
 def DoBreak(act):
     if act[0]:
@@ -388,6 +378,10 @@ def Statement(act):
         DoGoSub(act)
     elif TakeString("method " + append):
         DoSubDef()
+    elif TakeString("include " + out):
+        DoInclude()
+    elif TakeString("game" + out):
+        Game()
     elif TakeString("dump " + out):
         print_stack()
     else:
