@@ -1,18 +1,18 @@
 ### Examples
 ```sn
-! sample.sn
+# sample.sn
 
-! define the method print
+# define the method print
 method << print [
     stdout << "Hello World"
 ]
 
-! define the method main
+# define the method main
 method << main [
     stdout << "Hello?"
 ]
 
-! call the method 'print' from the stack
+# call the method 'print' from the stack
 stack << print
 stack << main
 
