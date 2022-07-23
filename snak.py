@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 
-# returns the current character while skipping over comments
+from doctest import OutputChecker
 import sys
-import os
 
-from numpy import var
-from scripts import git, log
-import qls.Web.__main__ as w
+from scripts import log
 
+# returns the current character while skipping over comments
 def Look():
     # comments are entered by # and exited by \n or \0
     global pc
-    if source[pc] == '!':
+    global source
+
+    if source[pc] == '#':
         while source[pc] != '\n' and source[pc] != '\0':
             # scan over comments here
             pc += 1
@@ -191,7 +191,7 @@ def String(act):
                 s += '\n'
             else:
                 s += Take()
-    str(...)
+    #str(...)
     elif TakeString("str("):
         s = str(MathExpression(act))
         if not TakeNext(')'):
@@ -360,12 +360,15 @@ def DoPrint(act):
 
 def DoExit(act):
     e = Expression(act)
-    exit(e[0])
+    exit(e[1])
 
 def Statement(act):
-    if TakeString("stdout <<"):
+    append = "<<"
+    out = ">>"
+
+    if TakeString("stdout " + append):
         DoPrint(act)
-    elif TakeString("done"):
+    elif TakeString("exit"):
         DoExit(act)
     elif TakeString("ret"):
         DoReturn(act)
@@ -375,11 +378,11 @@ def Statement(act):
         DoWhile(act)
     elif TakeString("break"):
         DoBreak(act)
-    elif TakeString("stack <<"):
+    elif TakeString("stack " + append):
         DoGoSub(act)
-    elif TakeString("method <<"):
+    elif TakeString("method " + append):
         DoSubDef()
-    elif TakeString("dump >>"):
+    elif TakeString("dump " + out):
         print_stack()
     else:
         DoAssign(act)
@@ -419,7 +422,7 @@ pc = 0
 variable = {}
 
 if len(sys.argv) < 2:
-    print('USAGE: ql [options] [file]')
+    print('USAGE: snak [file]')
     sys.exit(1)
 
 try:
