@@ -21,17 +21,17 @@ dump >> methods
 
 ```
 
-Implementation
-  Default: [Python](https://python.org)
-
-
 ### NEW
 1. added [setup.py](./setup.py) to install additional modules and the python script itself.
 2. added [log.py](./scripts/log.py) - used for pretty printing error's, warning's and to print msg.
 3. added [shop.py](./scripts/shop.py) - used to run shell commands in python and used in [setup.py](./setup.py).
 
 ### REVAMPED
-1. new name and syntax for this language
+1. new name and syntax for this language.
 
 ### REMOVED
-1. removed server support, git integration, user input
+1. removed server support, git integration, user input.
+
+## Notes
+1. If the snak.py not work on linux or macos, try dos2unix.
+2. the setup.py is only usable on linux platform.
