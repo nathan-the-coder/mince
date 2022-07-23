@@ -16,7 +16,8 @@ method << main [
 stack << print
 stack << main
 
-stdout << "Demonstrating while loops"
+# watched how many methods defined
+dump >> methods
 
 ```
 
@@ -24,13 +25,13 @@ Implementation
   Default: [Python](https://python.org)
 
 
-> ### NEW
->  1. added [setup.py](./setup.py) to install additional modules and the python script itself.
->  2. added [log.py](./scripts/log.py) - used for pretty printing error's, warning's and to print msg.
->  3. added [shop.py](./scripts/shop.py) - used to run shell commands in python and used in [setup.py](./setup.py).
+### NEW
+1. added [setup.py](./setup.py) to install additional modules and the python script itself.
+2. added [log.py](./scripts/log.py) - used for pretty printing error's, warning's and to print msg.
+3. added [shop.py](./scripts/shop.py) - used to run shell commands in python and used in [setup.py](./setup.py).
 
-> ### REVAMPED
-> 1. new name and syntax for this language
+### REVAMPED
+1. new name and syntax for this language
 
-> ### REMOVED
-> 1. removed server support, git integration, user input
+### REMOVED
+1. removed server support, git integration, user input
