@@ -1,0 +1,16 @@
+# define the method print
+method << print [
+    stdout << "Hello World"
+]
+
+# define the method main
+method << main [
+    stdout << "Hello?"
+    val(1)
+]
+
+# call the method 'print' from the stack
+stack << print
+stack << main
+
+stdout << "Demonstrating while loops"

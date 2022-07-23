@@ -2,7 +2,7 @@ import os
 import shutil
 import time
 from colorama import Fore
-import log
+from scripts import log
 
 def cd(path):
     """Change directory to path"""

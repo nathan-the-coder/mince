@@ -1,5 +1,0 @@
-DEFINE MAIN %
-  GIT::CLONE git "Drad3r5/QLang"
-%
-
-RUN MAIN

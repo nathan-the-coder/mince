@@ -3,14 +3,15 @@
 # returns the current character while skipping over comments
 import sys
 import os
-import log
-import git
+
+from numpy import var
+from scripts import git, log
 import qls.Web.__main__ as w
 
 def Look():
     # comments are entered by # and exited by \n or \0
     global pc
-    if source[pc] == '*':
+    if source[pc] == '!':
         while source[pc] != '\n' and source[pc] != '\0':
             # scan over comments here
             pc += 1
@@ -102,7 +103,7 @@ def BooleanFactor(act):
 
 def BooleanTerm(act):
     b = BooleanFactor(act)
-    while TakeString('AND'):
+    while TakeString('&&'):
         # logical and corresponds to multiplication
         b = b & BooleanFactor(act)
     return b
@@ -110,7 +111,7 @@ def BooleanTerm(act):
 
 def BooleanExpression(act):
     b = BooleanTerm(act)
-    while TakeString('OR'):
+    while TakeString('||'):
         # logical or corresponds to addition
         b = b | BooleanTerm(act)
     return b
@@ -125,16 +126,21 @@ def MathFactor(act):
     elif IsDigit(Next()):
         while IsDigit(Look()):
             m = 10 * m + ord(Take()) - ord('0')
-    # elif TakeString("val("):
-    #     s = String(act)
-    #     if act[0] and s.isdigit():
-    #         m = int(s)
-    #     if not TakeNext(')'):
-    #         Error("missing ')'")
+    elif TakeString("val("):
+        s = String(act)
+        if act[0] and s.isdigit():
+            m = int(s)
+        if not TakeNext(')'):
+            Error("missing ')'")
     else:
         ident = TakeNextAlNum()
         if ident not in variable or variable[ident][0] != 'i':
-            Error("unknown variable")
+            if ident == "False":
+                return False
+            elif ident == "True":
+                return True
+            else:
+                Error("unknown variable")
         elif act[0]:
             m = variable[ident][1]
     return m
@@ -185,14 +191,14 @@ def String(act):
                 s += '\n'
             else:
                 s += Take()
-    # str(...)
-    # elif TakeString("str("):
-    #     s = str(MathExpression(act))
-    #     if not TakeNext(')'):
-    #         Error("missing ')'")
-    # elif TakeString("input()"):
-    #     if act[0]:
-    #         s = input()
+    str(...)
+    elif TakeString("str("):
+        s = str(MathExpression(act))
+        if not TakeNext(')'):
+            Error("missing ')'")
+    elif TakeString("input()"):
+        if act[0]:
+            s = input()
     else:
         ident = TakeNextAlNum()
         if ident in variable and variable[ident][0] == 's':
@@ -258,7 +264,7 @@ def DoIfElse(act):
         Block([False])
     Next()
     # process else block?
-    if TakeString("ELSE"):
+    if TakeString("else"):
         if act[0] and not b:
             Block(act)
         else:
@@ -266,7 +272,7 @@ def DoIfElse(act):
 
 
 def DoGoSub(act):
-    global pc
+    global pc, stack
     ident = TakeNextAlNum()
     if ident not in variable or variable[ident][0] != 'p':
         Error("unknown subroutine")
@@ -275,52 +281,64 @@ def DoGoSub(act):
     Block(act)
     # execute block as a subroutine
     pc = ret
+    stack.append(ident)
 
 
 def DoSubDef():
     global pc
+    global methods
     ident = TakeNextAlNum()
     if ident == "":
         Error("missing subroutine identifier")
     variable[ident] = ('p', pc)
+    methods += 1
     Block([False])
 
 
 def DoAssign(act):
+    global vars
     ident = TakeNextAlNum()
     if not TakeNext('=') or ident == "":
         Error("unknown statement")
-    elif TakeString("GIT::CLONE"):
-        return
+
+    if ident == "False":
+        return 1
+    elif ident == "True":
+        return 0
+    
     e = Expression(act)
     if act[0] or ident not in variable:
         # assert initialization even if block is inactive
         variable[ident] = e
+        vars.append(ident)
 
 
 def DoReturn(act):
     ident = TakeNextAlNum()
+    e = Expression(act)
+    if act[0] or ident not in variable:
+        variable[ident] = e
+    return ident or e
+
+def print_stack():
+    global vars
+    global methods
+    global stack
+    global stdout
+
+    ident = TakeNextAlNum()
     if ident == "":
-        return
-    elif ident == "1":
-        Error("Return value must not exceed to 1")
-    elif ident == "-1":
-        Error("Return value must not be lower than -1")
-    else:
-        return ident
+        Error("missing stack identifier")
+    
+    if ident == "vars":
+        print(vars)
+    elif ident == "methods":
+        print("methods:", methods)
+    elif ident == "stack":
+        print(stack)
+    elif ident == "stdout":
+        print(stdout)
 
-
-def DoSrvRun():
-    try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        log.Log(1, "Stopping Server....")
-
-
-def DoServe(act):
-    global httpd
-    log.Log(2, "Run Server on it's Directory or else...")
-    httpd = w.HTTPServer(("localhost", 8080), w.web_server)
 
 def DoBreak(act):
     if act[0]:
@@ -329,104 +347,47 @@ def DoBreak(act):
 
 
 def DoPrint(act):
-    # process comma-separated arguments
-    while True:
-        e = Expression(act)
-        if act[0]:
-            print(e[1], end="")
-        if not TakeNext(','):
-            return
-
-
-def DoFormat(act):
+    global stdout
     # process comma-separated arguments
     while True:
         e = Expression(act)
         if act[0]:
             print(e[1], end="\n")
+            stdout.append(e[1])
         if not TakeNext(','):
             return
 
 
 def DoExit(act):
-    global pc
-    ident = TakeNextAlNum()
-    if act[0] and ident == "1":
-        Error("error code 1, quitting")
-    elif act[0] and ident == "-1":
-        Error("error code -1, quitting")
-    elif act[0] and ident == "":
-        exit()
-
-def Clone(act):
-    global pc
-    ident = TakeNextAlNum()
     e = Expression(act)
-
-
-    if act[0] and ident not in variable:
-        variable[ident] = e
-        # print(variable)
-        li = list(variable[ident])
-        git.clone(f"https://github.com/{str(li[1])}", f"/home/nathan/repo/{li[1]}")
-        # print(str(li[1]))
-
-
-def DoMkTemp():
-    os.system("touch style.css")
-    os.system("touch main.js")
-    with open('index.html', 'w+') as f:
-        f.write("<!DOCTYPE html>\n")
-        f.write("<html>\n")
-        f.write("    <head>\n")
-        f.write("        <meta charset='utf-8'>\n")
-        f.write("        <title>Document</title>\n")
-        f.write("        <link rel='stylesheet' href='style.css'>\n")
-        f.write("    </head>\n")
-        f.write("    <body>\n")
-        f.write("        <h1>Hello Html</h1>\n")
-        f.write("        <script src='main.js'></script>\n")
-        f.write("    </body>\n")
-        f.write("</html>\n")
+    exit(e[0])
 
 def Statement(act):
-    if TakeString("PRINT"):
+    if TakeString("stdout <<"):
         DoPrint(act)
-    elif TakeString("EXIT"):
+    elif TakeString("done"):
         DoExit(act)
-    elif TakeString("INPUT"):
-        DoInput(act)
-    elif TakeString("RETURN"):
+    elif TakeString("ret"):
         DoReturn(act)
-    elif TakeString("IF"):
+    elif TakeString("if"):
         DoIfElse(act)
-    elif TakeString("WHILE"):
+    elif TakeString("while"):
         DoWhile(act)
-    elif TakeString("MKHTML"):
-        DoMkTemp()
-    elif TakeString("GIT"):
-        if TakeString("::"):
-            if TakeString("CLONE"):
-                Clone(act)
-    elif TakeString("SERVE"):
-        if TakeString("::"):
-            if TakeString("INIT"):
-                DoServe(act)
-            if TakeString("OPEN"):
-                DoSrvRun()
-    elif TakeString("BREAK"):
+    elif TakeString("break"):
         DoBreak(act)
-    elif TakeString("RUN"):
+    elif TakeString("stack <<"):
         DoGoSub(act)
-    elif TakeString("DEFINE"):
+    elif TakeString("method <<"):
         DoSubDef()
+    elif TakeString("dump >>"):
+        print_stack()
     else:
         DoAssign(act)
 
 
 def Block(act):
-    if TakeNext("%"):
-        while not TakeNext("%"):
+    if TakeNext("["):
+        while not TakeNext("]"):
             Block(act)
     else:
         Statement(act)
@@ -448,6 +409,10 @@ def Error(text):
 
 # --------------------------------------------------------------------------------------------------
 
+stack = []
+methods = 0
+stdout = []
+vars = []
 
 pc = 0
 # program couter, identifier -> (type, value) lookup table
@@ -468,7 +433,7 @@ except FileNotFoundError:
 source = f.read() + '\0'
 
 # Dectect file extension
-if sys.argv[1].endswith('.ql'):
+if sys.argv[1].endswith('.sn'):
     pass
 else:
     log.Log(3, 'Source file is not support!')
