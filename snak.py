@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
+import argparse
 import os
 import sys
 
-from numpy import var
-import pygame
 
 from scripts import log
 
@@ -417,29 +416,41 @@ pc = 0
 # program couter, identifier -> (type, value) lookup table
 variable = {}
 
-if len(sys.argv) < 2:
-    print('USAGE: snak [file]')
-    sys.exit(1)
-
-try:
-    f = open(sys.argv[1], 'r')
-
-except FileNotFoundError:
-    print("ERROR: Can't find source file \'" + sys.argv[1] + "\'.")
-    sys.exit(1)
-
-# append a null termination
-source = f.read() + '\0'
 
 
+if os.path.isfile(sys.argv[1]):
+    try:
+        f = open(sys.argv[1], 'r')
 
-# Dectect file extension
-if sys.argv[1].endswith('.sn'):
-    pass
+    except FileNotFoundError:
+        print("ERROR: Can't find source file \'" + sys.argv[1] + "\'.")
+        sys.exit(1)
+
+    # Dectect file extension
+    if sys.argv[1].endswith('.sn'):
+        pass
+    else:
+        log.Log(3, 'Source file is not support!')
+    
+    # append a null termination
+    source = f.read() + '\0'
+
+
+    f.close()
+
+    Program()
+
 else:
-    log.Log(3, 'Source file is not support!')
 
+    if sys.argv[1].startswith('-'):
 
-f.close()
+        ap = argparse.ArgumentParser()
+        ap.add_argument("-e", "--edit", help="edit source file using the Snak editor")
+        arg = ap.parse_args()
 
-Program()
+        if os.path.isfile(arg.edit) and str(arg.edit).endswith(".sn"):
+            os.system(f"vim {arg.edit}")
+        else:
+            raise Exception("Cannot edit non source file.")
+    else:
+        f = open(sys.argv[2], 'r')
