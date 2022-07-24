@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
 # Import the scripts to be used inside the setup.py
+import os
 from scripts import log, shop
 
 # Variables to store directories used by the conditionals
 localDir = "/home/nathan/.local/"
 
 # check for the python local path if it is 3.10 or 3.9
-if os.path.isDir(localDir + "lib/python3.10/site-packages/"):
+if os.path.isdir(localDir + "lib/python3.10/site-packages/"):
     pythonDir = localDir + "lib/python3.10/site-packages/"
 else:
     pythonDir = localDir + "lib/python3.9/site-packages/"
@@ -41,7 +42,7 @@ elif log.sys.argv[1] == "install":
     shop.install(755, "snak.py", snak)
     
     # QL source directory
-    shop.install(0, "snak-ext", snake_ext)
+    shop.install(0, "snak-ext", snak_ext)
 
     # Scripts for the other functionalities of ql
     shop.install(755, "scripts/log.py", pythonDir+"log.py")

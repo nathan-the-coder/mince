@@ -1,3 +1,6 @@
+## Snak Programming Language  
+
+
 ### Examples
 ```sn
 # sample.sn
@@ -35,3 +38,4 @@ dump >> methods
 ## Notes
 1. If the snak.py not work on linux or macos, try dos2unix.
 2. the setup.py is only usable on linux platform.
+3. Snak is different from the esolang caled snak - differences are the syntax.

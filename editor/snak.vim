@@ -1,7 +1,7 @@
 " Vim syntax file 
 " Language: Snak Programming Language
 " Maintainer: Nathaniel Ramos
-" Latest Revision: 22 May 2022
+" Latest Revision: 24 July 2022
 
 
 if exists("b:current_syntax")
@@ -9,7 +9,7 @@ if exists("b:current_syntax")
 endif
 
 syn keyword snakTodo contained TODO FIXME XXX NOTE
-syn match snakComment "#.*$" contains=qlTodo
+syn match snakComment "#.*$" contains=snakTodo
 
 syn match snakNumber '\d\+' contained display
 syn match snakNumber '[-+]\d\+' contained display
@@ -23,7 +23,7 @@ syn match snakNumber '\d[[:digit:]]*[eE]][\-+]\=\d\+' contained display
 syn region snakString start='"' end='"' contained
 syn region snakDesc start='"' end='"'
 
-syn match snakHip '\d\{1,6}' nextgroup=qlString
+syn match snakHip '\d\{1,6}' nextgroup=snakString
 syn match snakFunction    "\h\w*" display contained
 
 syn match snakDecorator     "@" display contained
@@ -34,7 +34,7 @@ syn match snakDecoratorName "@\s*\h\%(\w\|\.\)*" display contains=snakDecorator
 syn region snakDescBlock start="[" end="]" fold transparent contains=snakNumber, snakFunction, snakConditional, snakRepeat, snakStatement,  snakBuiltin, snakOperator, snakComment 
 
 " Keywords
-syn keyword snakFunction << method stack dump 
+syn keyword snakFunction method stack dump 
 syn keyword snakConditional if else
 syn keyword snakRepeat while
 syn keyword snakStatement stdout  
@@ -43,6 +43,7 @@ syn keyword snakOperator or and True False
 
 
 let b:current_syntax = "snak"
+
 
 hi def link snakTodo           Todo
 hi def link snakComment        Comment 

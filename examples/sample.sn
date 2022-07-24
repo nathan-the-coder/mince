@@ -5,5 +5,8 @@ method << print [ stdout << "Hello World" ]
 method << main [ stdout << "Hello?" ]
 
 # call the method 'print' from the stack
-stack << print
-stack << main
+stack >> print
+stack >> main
+
+
+dump >> methods

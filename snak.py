@@ -1,11 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import argparse
 import os
 import sys
+import platform
 
-
-from scripts import log
+if platform.platform().startswith("Linux"):
+    import log
+elif platform.platform().startswith("Windows"):
+    from scripts import log
 
 # returns the current character while skipping over comments
 def Look():
@@ -373,7 +376,7 @@ def Statement(act):
         DoWhile(act)
     elif TakeString("break"):
         DoBreak(act)
-    elif TakeString("stack " + append):
+    elif TakeString("stack " + out):
         DoGoSub(act)
     elif TakeString("method " + append):
         DoSubDef()
