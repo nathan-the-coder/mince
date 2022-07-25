@@ -1,42 +1,64 @@
-## Snak Programming Language  
+## Mince Programming Language  
 
 
 ### Examples
-```sn
-# ./snak.py -e sample.sn
+Here is a example of a mince script
+```mc
+# ./mince.py -e examples/sample.mc
 
-# define the method print
-method << print [
-    stdout << "Hello World"
-]
+# define the function print
+define print {
+  println! "Hello World"
+}
 
-# define the method main
-method << main [
-    stdout << "Hello?"
-]
+# define the main function
+define main {
+  print! "Hello?\n"
+  print! 1 + 1
+  goto print
+}
 
-# call the method 'print' from the stack
-stack << print
-stack << main
-
-# watched how many methods defined
-dump >> methods
-
+# call the main function
+goto main
 ```
 
+## DIRECTORY TREE
+mince-lang
+├── editor
+│   └── mc.vim
+├── examples
+│   ├── print.mc
+│   ├── README.md
+│   └── sample.mc
+├── LICENSE
+├── mcs 
+├── mince.py
+├── README.md
+└── sedit
+    ├── Makefile
+    ├── sedit
+    └── sedit.c
+
+##### FILES & DIRECTORIES
+1. the directory [editor](./editor) is where the editor's syntax files located.
+2. the directory [examples](./examples) is where examples are stored.
+3. the directory [mcs](./mcs) or I call it 'mince extensions' is soon contains extensions for mince.
+4. the file [mince.py](./mince.py) is mince itself.
+5. the directory [sedit](./sedit) is where my custom terminal text editor is located.
+
+
 ### NEW
-1. added [setup.py](./setup.py) to install additional modules and the python script itself.
-2. added [log.py](./scripts/log.py) - used for pretty printing error's, warning's and to print msg.
-3. added [shop.py](./scripts/shop.py) - used to run shell commands in python and used in [setup.py](./setup.py).
-4. added [sedit](./sedit) - the editor i've made specifically for my language but there is no syntax highlighting yet.
+1. added [log.py](./scripts/log.py) - used for pretty printing error's, warning's and to print msg.
+2. added [shop.py](./scripts/shop.py) - used to run shell commands in python and used in [setup.py](./setup.py).
+3. added [sedit](./sedit) - the editor i've made specifically for my language but only C files are syntax highlighted.
 
 ### REVAMPED
-1. new name and syntax for this language.
+1. new name and syntax for this language. (2 times revamped)
 
 ### REMOVED
 1. removed server support, git integration, user input.
 
 ## Notes
-1. If the snak.py not work on linux or macos, try dos2unix.
-2. the setup.py is only usable on linux platform.
-3. Snak is different from the esolang caled snak - differences are the syntax.
+1. the setup.py is only usable on linux platform.
+2. The 'print!' and 'println!' function is like rust's print functions.
+3. Currently I wasn't able to implement function parameters because its hard to code :).

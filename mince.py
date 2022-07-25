@@ -3,18 +3,12 @@
 import argparse
 import os
 import sys
-import platform
 
-if platform.platform().startswith("Linux"):
-    import log
-elif platform.platform().startswith("Windows"):
-    from scripts import log
 
 # returns the current character while skipping over comments
 def Look():
     # comments are entered by # and exited by \n or \0
     global pc
-    global source
 
     if source[pc] == '#':
         while source[pc] != '\n' and source[pc] != '\0':
@@ -144,6 +138,8 @@ def MathFactor(act):
                 return False
             elif ident == "true":
                 return True
+            elif ident == "keyInt":
+                return KeyboardInterrupt
             else:
                 Error("unknown variable")
         elif act[0]:
@@ -267,23 +263,23 @@ def DoGoSub(act):
     global pc, stack
     ident = TakeNextAlNum()
     if ident not in variable or variable[ident][0] != 'p':
-        Error("unknown method")
+        Error("unknown function")
     ret = pc
     pc = variable[ident][1]
     Block(act)
     # execute block as a subroutine
     pc = ret
-    stack.append(ident)
 
 
 def DoSubDef():
     global pc
-    global methods
+
     ident = TakeNextAlNum()
+
     if ident == "":
-        Error("missing method identifier")
+        Error("missing function identifier")
+
     variable[ident] = ('p', pc)
-    methods += 1
     Block([False])
 
 
@@ -291,12 +287,7 @@ def DoAssign(act):
     global vars
     ident = TakeNextAlNum()
     if not TakeNext('=') or ident == "":
-        if ident == "include":
-            pass
-        elif ident == "game":
-            pass
-        else:
-            Error("unknown statement")
+        Error("unknown statement")
 
     if ident == "false":
         return 1
@@ -308,7 +299,6 @@ def DoAssign(act):
     if act[0] or ident not in variable:
         # assert initialization even if block is inactive
         variable[ident] = e
-        vars.append(ident)
 
 
 def DoReturn(act):
@@ -318,25 +308,14 @@ def DoReturn(act):
         variable[ident] = e
     return ident or e
 
-def print_stack():
-    global vars
-    global methods
-    global stack
-    global stdout
-
+def DoRaise(act):
     ident = TakeNextAlNum()
-    if ident == "":
-        Error("missing stack identifier")
-    
-    if ident == "vars":
-        print(vars)
-    elif ident == "methods":
-        print("methods:", methods)
-    elif ident == "stack":
-        print(stack)
-    elif ident == "stdout":
-        print(stdout)
-
+    if act[0] or ident not in exceptions:
+        Error("unknown exception")
+    if ident == "keyInt":
+        raise keyInt
+    else:
+        raise Exception
 
 def DoBreak(act):
     if act[0]:
@@ -350,43 +329,53 @@ def DoPrint(act):
     while True:
         e = Expression(act)
         if act[0]:
-            print(e[1], end="\n")
-            stdout.append(e[1])
+            print(e[1], end="")
         if not TakeNext(','):
             return
 
+def DoPrintLn(act):
+    global stdout
+    # process comma-separated arguments
+    while True:
+        e = Expression(act)
+        if act[0]:
+            print(e[1], end="\n")
+        if not TakeNext(','):
+            return
 
 def DoExit(act):
     e = Expression(act)
     exit(e[1])
 
 def Statement(act):
-    append = "<<"
-    out = ">>"
 
-    if TakeString("stdout " + append):
+    if TakeString("print!"):
         DoPrint(act)
+    elif TakeString("println!"):
+        DoPrintLn(act)
     elif TakeString("exit"):
         DoExit(act)
-    elif TakeString("ret"):
+    elif TakeString("return"):
         DoReturn(act)
+    elif TakeString("raise"):
+        DoRaise(act)
     elif TakeString("if"):
         DoIfElse(act)
     elif TakeString("while"):
         DoWhile(act)
     elif TakeString("break"):
         DoBreak(act)
-    elif TakeString("stack " + out):
+    elif TakeString("goto"):
         DoGoSub(act)
-    elif TakeString("method " + append):
+    elif TakeString("define"):
         DoSubDef()
     else:
         DoAssign(act)
 
 
 def Block(act):
-    if TakeNext("["):
-        while not TakeNext("]"):
+    if TakeNext("{"):
+        while not TakeNext("}"):
             Block(act)
     else:
         Statement(act)
@@ -404,6 +393,10 @@ def Error(text):
           str(source[:pc].count("\n") + 1) + ": '" + source[s:pc] + "_" + source[pc:e] + "'\n")
     sys.exit(1)
 
+class keyInt(Exception):
+
+    def __init__(self):
+        raise KeyboardInterrupt
 
 
 # --------------------------------------------------------------------------------------------------
@@ -416,6 +409,7 @@ vars = []
 pc = 0
 # program couter, identifier -> (type, value) lookup table
 variable = {}
+exceptions = {"keyInt"}
 
 
 
@@ -428,10 +422,10 @@ if os.path.isfile(sys.argv[1]):
         sys.exit(1)
 
     # Dectect file extension
-    if sys.argv[1].endswith('.sn'):
+    if sys.argv[1].endswith('.mc'):
         pass
     else:
-        log.Log(3, 'Source file is not support!')
+        Exception('Source file is not support!')
     
     # append a null termination
     source = f.read() + '\0'
@@ -446,7 +440,7 @@ else:
     if sys.argv[1].startswith('-'):
 
         ap = argparse.ArgumentParser()
-        ap.add_argument("-e", "--edit", help="edit source file using the Snak editor")
+        ap.add_argument("-e", "--edit", help="edit source file using the Mince editor")
         arg = ap.parse_args()
 
         if os.path.isfile(arg.edit) and str(arg.edit).endswith(".sn"):
