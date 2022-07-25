@@ -380,8 +380,6 @@ def Statement(act):
         DoGoSub(act)
     elif TakeString("method " + append):
         DoSubDef()
-    elif TakeString("dump " + out):
-        print_stack()
     else:
         DoAssign(act)
 

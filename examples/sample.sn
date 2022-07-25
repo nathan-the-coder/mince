@@ -9,5 +9,4 @@ stack >> print
 stack >> main
 
 
-dump >> methods
-
+stdout << 1 + 1

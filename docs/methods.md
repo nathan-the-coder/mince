@@ -14,13 +14,6 @@ and also stdout is the print method in snak.
 
 but methods in snak cannot have a parameter.
 
-every method defined the methods stack will increment
-and when dumped it will show the number of methods defined,
-```snak
-dump >> methods # < 'methods' is one of the variables that can be accessed using 'dump'
-# ^ 'dump' will print how many methods is defined,
-> 1
-```
 
 I also want to add that you can call a methods in the stack
 to run the method like so:.
