@@ -3,7 +3,7 @@
 
 ### Examples
 ```sn
-# sample.sn
+# ./snak.py -e sample.sn
 
 # define the method print
 method << print [
@@ -28,6 +28,7 @@ dump >> methods
 1. added [setup.py](./setup.py) to install additional modules and the python script itself.
 2. added [log.py](./scripts/log.py) - used for pretty printing error's, warning's and to print msg.
 3. added [shop.py](./scripts/shop.py) - used to run shell commands in python and used in [setup.py](./setup.py).
+4. added [sedit](./sedit) - the editor i've made specifically for my language but there is no syntax highlighting yet.
 
 ### REVAMPED
 1. new name and syntax for this language.

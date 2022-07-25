@@ -1,2 +1,17 @@
 
 stdout << "Hello World"
+
+method << main [
+	running = true
+	while running [
+		stdout << "Hello"
+		if keyInt [
+			done 0
+		]
+	]
+]
+
+stack >> main
+
+
+dump >> methods

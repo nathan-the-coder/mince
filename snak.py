@@ -452,8 +452,12 @@ else:
         arg = ap.parse_args()
 
         if os.path.isfile(arg.edit) and str(arg.edit).endswith(".sn"):
-            os.system(f"vim {arg.edit}")
+            if os.system("sedit"):
+                os.system(f"sedit {arg.edit}")
+            else:
+                os.system(f"./sedit/sedit {arg.edit}")
         else:
             raise Exception("Cannot edit non source file.")
     else:
         f = open(sys.argv[2], 'r')
+
