@@ -22,24 +22,6 @@ define main {
 goto main
 ```
 
-## DIRECTORY TREE
-
-
-mince-lang
-├── editor
-│   └── mc.vim
-├── examples
-│   ├── print.mc
-│   ├── README.md
-│   └── sample.mc
-├── LICENSE
-├── mcs 
-├── mince.py
-├── README.md
-└── sedit
-    ├── Makefile
-    ├── sedit
-    └── sedit.c
 
 ##### FILES & DIRECTORIES
 1. the directory [editor](./editor) is where the editor's syntax files located.
