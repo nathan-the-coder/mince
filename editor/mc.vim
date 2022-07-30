@@ -1,7 +1,7 @@
 " Vim syntax file 
 " Language: Mince Programming Language
 " Maintainer: Nathaniel Ramos
-" Latest Revision: 26 July 2022
+" Latest Revision: 30 July 2022
 
 
 if exists("b:current_syntax")
@@ -25,10 +25,6 @@ syn region mcDesc start='"' end='"'
 
 syn match mcHip '\d\{1,6}' nextgroup=mcString
 syn match mcFunction    "\h\w*" display contained
-
-syn match mcDecorator     "@" display contained
-syn match mcDecoratorName "@\s*\h\%(\w\|\.\)*" display contains=mcDecorator
-
 
 
 syn region mcDescBlock start="{" end="}" fold transparent contains=mcNumber, mcFunction, mcTodo, mcConditional, mcRepeat, mcStatement, mcDesc, mcBuiltin, mcOperator, mcComment, mcString 

@@ -138,8 +138,6 @@ def MathFactor(act):
                 return False
             elif ident == "true":
                 return True
-            elif ident == ":":
-                pass
             else:
                 Error("unknown variable")
         elif act[0]:
@@ -280,7 +278,6 @@ def DoSubDef():
         Error("missing function identifier")
 
     variable[ident] = ('p', pc)
-
     Block([False])
     
 
@@ -294,8 +291,6 @@ def DoAssign(act):
         return 1
     elif ident == "true":
         return 0
-    elif ident == ":":
-        print()
     
     e = Expression(act)
     if act[0] or ident not in variable:
@@ -310,14 +305,6 @@ def DoReturn(act):
         variable[ident] = e
     return ident or e
 
-def DoRaise(act):
-    ident = TakeNextAlNum()
-    if act[0] or ident not in exceptions:
-        Error("unknown exception")
-    if ident == "keyInt":
-        raise keyInt
-    else:
-        raise Exception
 
 def DoBreak(act):
     if act[0]:
