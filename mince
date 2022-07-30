@@ -399,11 +399,6 @@ except FileNotFoundError:
     print("ERROR: Can't find source file \'" + sys.argv[1] + "\'.")
     sys.exit(1)
 
-# Dectect file extension
-if sys.argv[1].endswith('.mc'):
-    pass
-else:
-    Exception('Source file is not support!')
     
 # append a null termination
 source = f.read() + '\0'
