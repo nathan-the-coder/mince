@@ -138,8 +138,8 @@ def MathFactor(act):
                 return False
             elif ident == "true":
                 return True
-            elif ident == "keyInt":
-                return KeyboardInterrupt
+            elif ident == ":":
+                pass
             else:
                 Error("unknown variable")
         elif act[0]:
@@ -280,12 +280,13 @@ def DoSubDef():
         Error("missing function identifier")
 
     variable[ident] = ('p', pc)
-    Block([False])
 
+    Block([False])
+    
 
 def DoAssign(act):
-    global vars
     ident = TakeNextAlNum()
+
     if not TakeNext('=') or ident == "":
         Error("unknown statement")
 
@@ -293,7 +294,8 @@ def DoAssign(act):
         return 1
     elif ident == "true":
         return 0
-
+    elif ident == ":":
+        print()
     
     e = Expression(act)
     if act[0] or ident not in variable:
@@ -357,8 +359,6 @@ def Statement(act):
         DoExit(act)
     elif TakeString("return"):
         DoReturn(act)
-    elif TakeString("raise"):
-        DoRaise(act)
     elif TakeString("if"):
         DoIfElse(act)
     elif TakeString("while"):
@@ -393,25 +393,17 @@ def Error(text):
           str(source[:pc].count("\n") + 1) + ": '" + source[s:pc] + "_" + source[pc:e] + "'\n")
     sys.exit(1)
 
-class keyInt(Exception):
-
-    def __init__(self):
-        raise KeyboardInterrupt
-
 
 # --------------------------------------------------------------------------------------------------
-
-stack = []
-methods = 0
-stdout = []
-vars = []
 
 pc = 0
 # program couter, identifier -> (type, value) lookup table
 variable = {}
-exceptions = {"keyInt"}
 
-
+if len(sys.argv) < 2: 
+    print("Usage: mince [options] [file]")
+    print("No arguments provided!")
+    exit(1)
 
 if os.path.isfile(sys.argv[1]):
     try:
@@ -443,7 +435,7 @@ else:
         ap.add_argument("-e", "--edit", help="edit source file using the Mince editor")
         arg = ap.parse_args()
 
-        if os.path.isfile(arg.edit) and str(arg.edit).endswith(".sn"):
+        if os.path.isfile(arg.edit) and str(arg.edit).endswith(".mc"):
             if os.system("sedit"):
                 os.system(f"sedit {arg.edit}")
             else:

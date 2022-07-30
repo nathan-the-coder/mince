@@ -39,7 +39,7 @@ syn keyword mcConditional if else
 syn keyword mcRepeat while
 syn keyword mcStatement print println
 syn keyword mcBuiltin break exit
-syn keyword mcOperator or and true false
+syn keyword mcOperator or and true false nil
 
 
 let b:current_syntax = "mc"

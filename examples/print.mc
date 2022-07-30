@@ -1,8 +1,5 @@
-
-# defining the main function
-define main {
+define main { 
 	println! "Hello World"
-
 	return 0
 }
 

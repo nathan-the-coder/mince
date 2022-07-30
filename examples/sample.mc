@@ -1,12 +1,10 @@
-# define the function print
 define print {
   println! "Hello World"
 }
 
-# define the main function
 define main {
-  print! "Hello?\n"
-  print! 1 + 1
+  println! "Hello?"
+  println! 1 + 1
   goto print
 }
 
