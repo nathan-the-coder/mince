@@ -2,7 +2,10 @@
 
 
 ### Examples
+
 Here is a example of a mince script
+
+
 ![example](./screenshots/example.png)
 
 
