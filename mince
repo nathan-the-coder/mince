@@ -405,43 +405,23 @@ if len(sys.argv) < 2:
     print("No arguments provided!")
     exit(1)
 
-if os.path.isfile(sys.argv[1]):
-    try:
-        f = open(sys.argv[1], 'r')
+try:
+    f = open(sys.argv[1], 'r')
 
-    except FileNotFoundError:
-        print("ERROR: Can't find source file \'" + sys.argv[1] + "\'.")
-        sys.exit(1)
+except FileNotFoundError:
+    print("ERROR: Can't find source file \'" + sys.argv[1] + "\'.")
+    sys.exit(1)
 
-    # Dectect file extension
-    if sys.argv[1].endswith('.mc'):
-        pass
-    else:
-        Exception('Source file is not support!')
-    
-    # append a null termination
-    source = f.read() + '\0'
-
-
-    f.close()
-
-    Program()
-
+# Dectect file extension
+if sys.argv[1].endswith('.mc'):
+    pass
 else:
+    Exception('Source file is not support!')
+    
+# append a null termination
+source = f.read() + '\0'
 
-    if sys.argv[1].startswith('-'):
 
-        ap = argparse.ArgumentParser()
-        ap.add_argument("-e", "--edit", help="edit source file using the Mince editor")
-        arg = ap.parse_args()
+f.close()
 
-        if os.path.isfile(arg.edit) and str(arg.edit).endswith(".mc"):
-            if os.system("sedit"):
-                os.system(f"sedit {arg.edit}")
-            else:
-                os.system(f"./sedit/sedit {arg.edit}")
-        else:
-            raise Exception("Cannot edit non source file.")
-    else:
-        f = open(sys.argv[2], 'r')
-
+Program()
