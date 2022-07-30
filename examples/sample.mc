@@ -7,7 +7,7 @@ define hello {
 define main {
   println! "Hello?"
   println! 1 + 1
-  goto print
+  goto hello
 }
 
 
