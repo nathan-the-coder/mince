@@ -13,7 +13,6 @@ Here is a example of a mince script
 - the directory [editor](./editor) is where the all editor support will be stored.
 - the directory [examples](./examples) is where all examples are stored.
 - the directory [mcs](./mcs) or I call it 'mince extensions' will soon contain extensions for mince.
-- the file [mince.py](./mince.py) is language itself.
 
 ### INSTALLATION
 ##### For linux users
