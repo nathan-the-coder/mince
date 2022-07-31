@@ -313,7 +313,6 @@ def DoBreak(act):
 
 
 def DoPrint(act):
-    global stdout
     # process comma-separated arguments
     while True:
         e = Expression(act)
@@ -323,7 +322,6 @@ def DoPrint(act):
             return
 
 def DoPrintLn(act):
-    global stdout
     # process comma-separated arguments
     while True:
         e = Expression(act)
@@ -335,6 +333,7 @@ def DoPrintLn(act):
 def DoExit(act):
     e = Expression(act)
     exit(e[1])
+
 
 def Statement(act):
 
