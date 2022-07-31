@@ -305,6 +305,15 @@ def DoReturn(act):
         variable[ident] = e
     return ident or e
 
+def DoRun(act):
+    ident = TakeNextAlNum()
+
+    e = Expression(act)
+
+    os.system(e[1])
+
+    if act[0] or ident not in variable:
+        variable[ident] = e
 
 def DoBreak(act):
     if act[0]:
@@ -326,6 +335,7 @@ def DoPrintLn(act):
     while True:
         e = Expression(act)
         if act[0]:
+
             print(e[1], end="\n")
         if not TakeNext(','):
             return
@@ -334,6 +344,30 @@ def DoExit(act):
     e = Expression(act)
     exit(e[1])
 
+def DoRead(act):
+    ident = TakeNextAlNum()
+
+    e = Expression(act)
+
+    with open(e[1], "r") as f:
+        print(f.read())
+
+    if act[0] or ident not in variable:
+        variable[ident] = e
+
+def DoWrite(act):
+    global pc
+    ident = TakeNextAlNum()
+
+    e = Expression(act)
+    fi = Expression(act)
+
+    with open(e[1], "w") as f:
+        f.write(fi[1])
+
+
+    if act[0] or ident not in variable:
+        variable[ident] = e
 
 def Statement(act):
 
@@ -345,6 +379,12 @@ def Statement(act):
         DoExit(act)
     elif TakeString("return"):
         DoReturn(act)
+    elif TakeString("read"):
+        DoRead(act)
+    elif TakeString("write"):
+        DoWrite(act)
+    elif TakeString("system"):
+        DoRun(act)
     elif TakeString("if"):
         DoIfElse(act)
     elif TakeString("while"):
