@@ -1,3 +1,4 @@
+println! "Reading print.mc\n"
 
-read "print.mc"
+read "print.mc" 100
 

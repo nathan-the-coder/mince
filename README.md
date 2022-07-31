@@ -16,7 +16,11 @@ Here is a example of a mince script
 - the file [mince.py](./mince.py) is language itself.
 
 ### INSTALLATION
+##### For linux users
 - to install the editor support files use the custom [make](./editor/make) script in the editor directory
+- for linux users (like me!) use make to install mince to local bin directory
+##### For Windows
+- run the file using command prompt the make script and makefile is not needed 
 
 
 ### NEW

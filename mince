@@ -348,8 +348,12 @@ def DoRead(act):
     ident = TakeNextAlNum()
 
     e = Expression(act)
+    fl = Expression(act)
 
     with open(e[1], "r") as f:
+        if fl[1] is not None:
+            print(f.read(fl[1]))
+
         print(f.read())
 
     if act[0] or ident not in variable:
