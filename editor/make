@@ -92,8 +92,13 @@ if __name__ == "__main__":
 
 
     elif sys.argv[1] == "install":
-        os.system(f"install ./mc.vim /home/nathan/.config/nvim/syntax")
+        os.system("install ./mc.vim /home/nathan/.config/nvim/syntax")
+    elif sys.argv[1] == "clean":
+        os.system("rm mc.vim")
+        
     elif sys.argv[1] != str(args).strip():
         args.append("syntax")
+        args.append("install")
+        args.append("clean")
         print(f"Available arguments are: {str(args)}")
         exit(1)

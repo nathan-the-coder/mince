@@ -24,6 +24,7 @@ Here is a example of a mince script
 
 ### NEW
 - added [sedit](https://github.com/nathan-the-coder/sedit) - the editor i've made specifically for my language.
+- added file read and write function.
 
 ### REVAMPED
 - new name and syntax for this language. (2 times revamped)
