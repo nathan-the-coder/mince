@@ -16,22 +16,19 @@ Here is a example of a mince script
 
 ### INSTALLATION
 ##### For linux users
-- to install the editor support files,
-- use the custom [make](./editor/make) script in the editor directory
-- to install mince to ~/.local/bin run ./make install.
+- cp the [mince.vim](./editor/vim/mince.vim) file (if you use neo/vim) to, ~/.vim/sytax or ~/.config/nvim/syntax/
+- append the line that is on [filetype.vim](./editor/vim/filetype.vim) to neo/vim runtime directories
+- run ./make install to install mince to ~/.local/bin.
 ##### For Windows
-- you can just run the file using command prompt because the make script and makefile is not needed.
+- you can just run the file using command prompt.
 
 
 ### NEW
 - added [sedit](https://github.com/nathan-the-coder/sedit),
 - it is the editor i've made specifically for my language.
-- added file read and write function using the keyword 'read' and 'write',
-- added support for running shell commands using the 'system' keyword
-- inside of a mince script
+- added file read and write function
+- added support for running shell commands using the 'system' keyword 
 
-### REVAMPED
-- new name and syntax for this language. (2 times revamped)
 
 ### Notes
 - Currently I wasn't able to implement function parameters,
