@@ -1,6 +1,2 @@
-define main {
-  println! "Reading print.mc\n"
-  read "print.mc" 100
-}
-
-call main
+println! "test.py contents:\n"
+read "test.py" 100

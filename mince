@@ -345,14 +345,14 @@ def DoExit(act):
 def DoRead(act):
     ident = TakeNextAlNum()
 
+    f1 = Expression(act)
     e = Expression(act)
-    fl = Expression(act)
 
-    with open(e[1], "r") as f:
-        if fl[1] is not None:
-            print(f.read(fl[1]))
-
-        print(f.read())
+    with open(f1[1], "r") as f:
+        if e is not None:
+            print(f.read(e[1]))
+        else:
+            print(f.read())
 
     if act[0] or ident not in variable:
         variable[ident] = e
