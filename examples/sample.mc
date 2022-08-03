@@ -1,3 +1,4 @@
+println! "Running on sample.mc\n"
 # define the function hello
 define hello {
   println! "Hello World"
@@ -7,10 +8,10 @@ define hello {
 define main {
   println! "Hello?"
   println! 1 + 1
-  goto hello
+  call hello
 }
 
 
 # call the main function
-goto main
+call main
 
