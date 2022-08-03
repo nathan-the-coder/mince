@@ -1,9 +1,6 @@
-#!/usr/bin/env python
+#!/bin/bash
 
-import sys, os
-
-
-if sys.argv[1] == "install":
-    print("install -Dm755 ./mince ~/local/bin/")
-    os.system("install -Dm755 ./mince ~/local/bin/mince")
-
+if [[ $1 == "install" ]]; then
+    echo "cp ./mince $HOME/.local/bin/mince"
+    cp ./mince $HOME/.local/bin/mince
+fi
