@@ -25,11 +25,11 @@ syn region minceDescBlock start="{" end="}" fold transparent contains=minceNumbe
 syn keyword minceFunction define 
 syn keyword minceConditional if else
 syn keyword minceRepeat while
-syn keyword minceStatement print println goto system read write
+syn keyword minceStatement print println call system read write
 syn keyword minceBuiltin break exit true false
 syn keyword minceOperator or and 
 
-let b:current_syntax = "mince"
+let b:current_syntax = "mc"
 
 hi def link minceTodo              Todo
 hi def link minceComment           Comment

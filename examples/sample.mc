@@ -1,4 +1,3 @@
-println! "Running on sample.mc\n"
 # define the function hello
 define hello {
   println! "Hello World"
