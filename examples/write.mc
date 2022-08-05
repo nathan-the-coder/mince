@@ -1,2 +1,1 @@
-
-write "test.py" "print('Hello')"
+write "test.py" "print('Hello')"  # Write 'print('Hello')' to test.py

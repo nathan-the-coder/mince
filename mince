@@ -256,7 +256,7 @@ def DoIfElse(act):
 
 
 def DoCallFun(act):
-    global pc, stack
+    global pc
     ident = TakeNextAlNum()
     if ident not in variable or variable[ident][0] != 'p':
         Error("unknown function")
@@ -365,12 +365,13 @@ def DoWrite(act):
     e = Expression(act)
     fi = Expression(act)
 
-    with open(e[1], "w") as f:
+    with open(e[1], "w+") as f:
         f.write(fi[1])
 
 
     if act[0] or ident not in variable:
         variable[ident] = e
+  
 
 def Statement(act):
 
@@ -394,7 +395,7 @@ def Statement(act):
         DoWhile(act)
     elif TakeString("break"):
         DoBreak(act)
-    elif TakeString("call") or TakeString("invoke"):
+    elif TakeString("call"):
         DoCallFun(act)
     elif TakeString("define"):
         DoFunDef()
