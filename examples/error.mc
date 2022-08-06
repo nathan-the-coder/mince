@@ -1,6 +1,4 @@
 
-
-
 define main {
-  error "Cannot find return statement"
+  error "Add something here"
 }
