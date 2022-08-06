@@ -284,13 +284,16 @@ def DoAssign(act):
 
     if not TakeNext('=') or ident == "":
         Error("unknown statement")
-
-    if ident == "false":
-        return 1
-    elif ident == "true":
-        return 0
+        
     
     e = Expression(act)
+
+    if e[1] == "false":
+        return 1
+    elif e[1] == "true":
+        return 0
+    
+
     if act[0] or ident not in variable:
         # assert initialization even if block is inactive
         variable[ident] = e
@@ -301,7 +304,7 @@ def DoReturn(act):
     e = Expression(act)
     if act[0] or ident not in variable:
         variable[ident] = e
-    return ident or e
+    return e[1]
 
 def DoRun(act):
     ident = TakeNextAlNum()
@@ -312,6 +315,8 @@ def DoRun(act):
 
     if act[0] or ident not in variable:
         variable[ident] = e
+
+
 
 def DoBreak(act):
     if act[0]:
@@ -341,6 +346,8 @@ def DoPrintLn(act):
 def DoExit(act):
     e = Expression(act)
     exit(e[1])
+
+
 
 def DoRead(act):
     ident = TakeNextAlNum()
@@ -372,6 +379,17 @@ def DoWrite(act):
     if act[0] or ident not in variable:
         variable[ident] = e
   
+def DoError(act):
+    ident = TakeNextAlNum()
+
+    e = Expression(act)
+    line = str(source[:pc].count("\n"))
+
+    print(f"mince: {sys.argv[1]}:{line}: {e[1]}")
+    exit(1)
+
+    if act[0] or ident not in variable:
+        variable[ident] = e
 
 def Statement(act):
 
@@ -389,6 +407,8 @@ def Statement(act):
         DoWrite(act)
     elif TakeString("system"):
         DoRun(act)
+    elif TakeString("error"):
+        DoError(act)
     elif TakeString("if"):
         DoIfElse(act)
     elif TakeString("while"):
