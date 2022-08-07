@@ -1,7 +1,10 @@
 # define the main function
-define main { 
-	println! "Hello World"
-	return 0
+define hello { 
+    println! "This is the parent function"
+    define nested {
+        println! "This is a child function"
+    
+    call nested
 }
 
-call main
+call hello
