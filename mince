@@ -2,6 +2,8 @@
 
 import os
 import sys
+from colorama import Fore
+
 
 # returns the current character while skipping over comments
 def Look():
@@ -439,7 +441,7 @@ def Program():
 def Error(text):
     s = source[:pc].rfind("\n") + 1
     e = source.find("\n", pc)
-    print("\n[ERROR] " + text + " in line " +
+    print(Fore.RED + "\n[ERROR]: " + Fore.RESET + text + " in line " +
           str(source[:pc].count("\n") + 1) + ": '" + source[s:pc] + "_" + source[pc:e] + "'\n")
     sys.exit(1)
 
