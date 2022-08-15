@@ -3,12 +3,18 @@
 import os
 import sys
 
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+os.environ["SDL_VIDEODRIVER"] = "dummy"
+
+import pygame
+
+
 # returns the current character while skipping over comments
 def Look():
     # comments are entered by # and exited by \n or \0
     global pc
 
-    if source[pc] == '#':
+    if source[pc] == '/' and source[pc+1] == '/':
         while source[pc] != '\n' and source[pc] != '\0':
             # scan over comments here
             pc += 1
@@ -136,6 +142,7 @@ def MathFactor(act):
                 return False
             elif ident == "true":
                 return True
+
             else:
                 Error("unknown variable")
         elif act[0]:
@@ -188,14 +195,6 @@ def String(act):
                 s += '\n'
             else:
                 s += Take()
-    #str(...)
-    elif TakeString("str("):
-        s = str(MathExpression(act))
-        if not TakeNext(')'):
-            Error("missing ')'")
-    elif TakeString("input()"):
-        if act[0]:
-            s = input()
     else:
         ident = TakeNextAlNum()
         if ident in variable and variable[ident][0] == 's':
@@ -277,22 +276,21 @@ def DoFunDef():
 
     variable[ident] = ('p', pc)
     Block([False])
-    
+
 
 def DoAssign(act):
     ident = TakeNextAlNum()
 
     if not TakeNext('=') or ident == "":
         Error("unknown statement")
-        
-    
+
     e = Expression(act)
 
     if e[1] == "false":
         return 1
     elif e[1] == "true":
         return 0
-    
+
 
     if act[0] or ident not in variable:
         # assert initialization even if block is inactive
@@ -306,6 +304,7 @@ def DoReturn(act):
         variable[ident] = e
     return e[1]
 
+
 def DoRun(act):
     ident = TakeNextAlNum()
 
@@ -315,7 +314,6 @@ def DoRun(act):
 
     if act[0] or ident not in variable:
         variable[ident] = e
-
 
 
 def DoBreak(act):
@@ -333,20 +331,10 @@ def DoPrint(act):
         if not TakeNext(','):
             return
 
-def DoPrintLn(act):
-    # process comma-separated arguments
-    while True:
-        e = Expression(act)
-        if act[0]:
-
-            print(e[1], end="\n")
-        if not TakeNext(','):
-            return
 
 def DoExit(act):
     e = Expression(act)
     exit(e[1])
-
 
 
 def DoRead(act):
@@ -366,7 +354,6 @@ def DoRead(act):
 
 
 def DoWrite(act):
-    global pc
     ident = TakeNextAlNum()
 
     e = Expression(act)
@@ -375,46 +362,64 @@ def DoWrite(act):
     with open(e[1], "w+") as f:
         f.write(fi[1])
 
+    if act[0] or ident not in variable:
+        variable[ident] = e
+
+
+def InitWindow(act):
+
+    ident = TakeNextAlNum()
+
+    e = Expression(act)
+    f = Expression(act)
+    g = Expression(act)
+
+    pygame.init()
+    pygame.display.set_mode((e[1], f[1]))
+    pygame.display.set_caption(g[1])
 
     if act[0] or ident not in variable:
         variable[ident] = e
-  
+
+
 def DoError(act):
     ident = TakeNextAlNum()
 
     e = Expression(act)
     line = str(source[:pc].count("\n"))
 
-    print(f"mince: {sys.argv[1]}:{line}: {e[1]}")
-    exit(1)
-
     if act[0] or ident not in variable:
         variable[ident] = e
 
-def Statement(act):
+    print(f"mince: {sys.argv[1]}:{line}: {e[1]}")
+    exit(-1)
 
-    if TakeString("print!"):
-        DoPrint(act)
-    elif TakeString("println!"):
-        DoPrintLn(act)
-    elif TakeString("exit"):
+
+def Statement(act):
+    if TakeString("exit"):
         DoExit(act)
     elif TakeString("return"):
         DoReturn(act)
-    elif TakeString("read"):
-        DoRead(act)
-    elif TakeString("write"):
-        DoWrite(act)
     elif TakeString("system"):
         DoRun(act)
     elif TakeString("error"):
         DoError(act)
+    elif TakeString("break"):
+        DoBreak(act)
+
+    if TakeString("InitWindow"):
+        InitWindow(act)
+
+    if TakeString("echo"):
+        DoPrint(act)
+    elif TakeString("read"):
+        DoRead(act)
+    elif TakeString("write"):
+        DoWrite(act)
     elif TakeString("if"):
         DoIfElse(act)
     elif TakeString("while"):
         DoWhile(act)
-    elif TakeString("break"):
-        DoBreak(act)
     elif TakeString("call"):
         DoCallFun(act)
     elif TakeString("define"):
@@ -436,11 +441,13 @@ def Program():
     while Next() != '\0':
         Block(act)
 
+
 def Error(text):
     s = source[:pc].rfind("\n") + 1
     e = source.find("\n", pc)
     print("\n[ERROR] " + text + " in line " +
-          str(source[:pc].count("\n") + 1) + ": '" + source[s:pc] + "_" + source[pc:e] + "'\n")
+          str(source[:pc].count("\n") + 1) +
+          ": '" + source[s:pc] + "_" + source[pc:e] + "'\n")
     sys.exit(1)
 
 
@@ -451,7 +458,7 @@ pc = 0
 # program couter, identifier -> (type, value) lookup table
 variable = {}
 
-if len(sys.argv) < 2: 
+if len(sys.argv) < 2:
     print("Usage: mince [options] [file]")
     print("No arguments provided!")
     exit(1)
@@ -463,7 +470,7 @@ except FileNotFoundError:
     print("ERROR: Can't find source file \'" + sys.argv[1] + "\'.")
     sys.exit(1)
 
-    
+
 # append a null termination
 source = f.read() + '\0'
 

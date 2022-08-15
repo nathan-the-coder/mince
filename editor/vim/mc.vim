@@ -7,7 +7,7 @@ if exists("b:current_syntax")
   finish
 endif
 syn keyword minceTodo contained TODO FIXME XXX NOTE
-syn match minceComment '#.*$' contains=minceTodo
+syn match minceComment '//.*$' contains=minceTodo
 
 syn match minceNumber '\d\+' contained display
 syn match minceNumber '[-+]\d\+' contained display
@@ -25,7 +25,7 @@ syn region minceDescBlock start="{" end="}" fold transparent contains=minceNumbe
 syn keyword minceFunction define 
 syn keyword minceConditional if else
 syn keyword minceRepeat while
-syn keyword minceStatement print println call system read write
+syn keyword minceStatement echo call system read write InitWindow
 syn keyword minceBuiltin break exit true false
 syn keyword minceOperator or and 
 

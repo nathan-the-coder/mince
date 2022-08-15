@@ -18,4 +18,3 @@ define main {
 
 # call the main function
 call main
-
