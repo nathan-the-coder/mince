@@ -12,10 +12,10 @@ syn match minceComment '#.*$' contains=minceTodo
 syn match minceNumber '\d\+' contained display
 syn match minceNumber '[-+]\d\+' contained display
 
-syn match mcNumber '[-+]\=\d[[:digit:]]*[eE][\-+]\=\d\+' contained display
-syn match mcNumber '\d[[:digit:]]*[eE]][\-+]\=\d\+' contained display
+syn match minceNumber '[-+]\=\d[[:digit:]]*[eE][\-+]\=\d\+' contained display
+syn match minceNumber '\d[[:digit:]]*[eE]][\-+]\=\d\+' contained display
 
-syn region mcString start='"' end='"' contained
+syn region minceString start='"' end='"' contained
 syn region minceDesc start='"' end='"'
 
 syn match minceFunction "\h\w*" display contained
@@ -33,10 +33,10 @@ let b:current_syntax = "mc"
 
 hi def link minceTodo              Todo
 hi def link minceComment           Comment
-hi def link minceStatement         Statement
+hi def link minceStatement         TSStatement
 hi def link minceFunction          Function
 hi def link minceConditional       Conditional
-hi def link minceString            String
+hi def link minceString            TSString
 hi def link minceDesc              Define
 hi def link minceNumber            Constant
 hi def link minceRepeat            Repeat

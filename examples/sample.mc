@@ -5,9 +5,9 @@ define hello {
 
 # define the main function (not needed but why not :)
 define main {
-  println! "Hello?"
+  println "Hello?"
   # you can only run math expression using print! or println!
-  println! 1 + 1
+  println 1 + 1
   # it will complain if run directly like this:
   # 1 + 1 -> unknown statement _1 + 1
 

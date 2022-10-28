@@ -1,4 +1,4 @@
-println! "test.py contents:\n"  # print the string with newline at the end
+println "test.py contents:\n"  # print the string with newline at the end
 
 # read the file with a specific size,
 # the value -1 will read all the content of the file

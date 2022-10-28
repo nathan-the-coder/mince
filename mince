@@ -10,7 +10,7 @@ def Look():
     # comments are entered by # and exited by \n or \0
     global pc
 
-    if source[pc] == '#':
+    if source[pc] == '/' and source[pc+1] == '/':
         while source[pc] != '\n' and source[pc] != '\0':
             # scan over comments here
             pc += 1
@@ -395,9 +395,9 @@ def DoError(act):
 
 def Statement(act):
 
-    if TakeString("print!"):
+    if TakeString("print"):
         DoPrint(act)
-    elif TakeString("println!"):
+    elif TakeString("println"):
         DoPrintLn(act)
     elif TakeString("exit"):
         DoExit(act)
@@ -441,8 +441,7 @@ def Program():
 def Error(text):
     s = source[:pc].rfind("\n") + 1
     e = source.find("\n", pc)
-    print(Fore.RED + "\n[ERROR]: " + Fore.RESET + text + " in line " +
-          str(source[:pc].count("\n") + 1) + ": '" + source[s:pc] + "_" + source[pc:e] + "'\n")
+    print(Fore.RED + "\n[ERROR]: " + Fore.RESET + text + ": " + source[s:pc] + "_" + source[pc:e] + "'\n")
     sys.exit(1)
 
 
