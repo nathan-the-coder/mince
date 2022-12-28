@@ -2,7 +2,6 @@
 
 import os
 import sys
-from colorama import Fore
 
 
 # returns the current character while skipping over comments
@@ -10,7 +9,7 @@ def Look():
     # comments are entered by # and exited by \n or \0
     global pc
 
-    if source[pc] == '/' and source[pc+1] == '/':
+    if source[pc] == '#':
         while source[pc] != '\n' and source[pc] != '\0':
             # scan over comments here
             pc += 1
@@ -125,12 +124,6 @@ def MathFactor(act):
     elif IsDigit(Next()):
         while IsDigit(Look()):
             m = 10 * m + ord(Take()) - ord('0')
-    elif TakeString("val("):
-        s = String(act)
-        if act[0] and s.isdigit():
-            m = int(s)
-        if not TakeNext(')'):
-            Error("missing ')'")
     else:
         ident = TakeNextAlNum()
         if ident not in variable or variable[ident][0] != 'i':
@@ -190,20 +183,14 @@ def String(act):
                 s += '\n'
             else:
                 s += Take()
-    #str(...)
-    elif TakeString("str("):
-        s = str(MathExpression(act))
-        if not TakeNext(')'):
-            Error("missing ')'")
-    elif TakeString("input()"):
-        if act[0]:
-            s = input()
     else:
         ident = TakeNextAlNum()
+
         if ident in variable and variable[ident][0] == 's':
             s = variable[ident][1]
         else:
             Error("not a string")
+
     return s
 
 
@@ -217,10 +204,14 @@ def StringExpression(act):
 
 def Expression(act):
     global pc
+
     copypc = pc
+
     ident = TakeNextAlNum()
+
     # scan for identifier or "str"
     pc = copypc
+
     if(Next() == '\"' or ident == "str"
             or ident == "input"
             or (ident in variable and variable[ident][0] == 's')):
@@ -231,24 +222,31 @@ def Expression(act):
 
 def DoWhile(act):
     global pc
+
     local = [act[0]]
+
     # save PC of the while statement
     pc_while = pc
+
     while BooleanExpression(local):
         Block(local)
         pc = pc_while
+
     # scan over inactive block and leave while
     Block([False])
 
 
 def DoIfElse(act):
     b = BooleanExpression(act)
+
     if act[0] and b:
         # process if block?
         Block(act)
     else:
         Block([False])
+
     Next()
+
     # process else block?
     if TakeString("else"):
         if act[0] and not b:
@@ -260,11 +258,15 @@ def DoIfElse(act):
 def DoCallFun(act):
     global pc
     ident = TakeNextAlNum()
+
     if ident not in variable or variable[ident][0] != 'p':
         Error("unknown function")
+
     ret = pc
     pc = variable[ident][1]
+
     Block(act)
+
     # execute block as a subroutine
     pc = ret
 
@@ -279,22 +281,20 @@ def DoFunDef():
 
     variable[ident] = ('p', pc)
     Block([False])
-    
+
 
 def DoAssign(act):
     ident = TakeNextAlNum()
 
     if not TakeNext('=') or ident == "":
         Error("unknown statement")
-        
-    
+
     e = Expression(act)
 
     if e[1] == "false":
         return 1
     elif e[1] == "true":
         return 0
-    
 
     if act[0] or ident not in variable:
         # assert initialization even if block is inactive
@@ -308,6 +308,7 @@ def DoReturn(act):
         variable[ident] = e
     return e[1]
 
+
 def DoRun(act):
     ident = TakeNextAlNum()
 
@@ -317,7 +318,6 @@ def DoRun(act):
 
     if act[0] or ident not in variable:
         variable[ident] = e
-
 
 
 def DoBreak(act):
@@ -331,19 +331,10 @@ def DoPrint(act):
     while True:
         e = Expression(act)
         if act[0]:
-            print(e[1], end="")
-        if not TakeNext(','):
-            return
-
-def DoPrintLn(act):
-    # process comma-separated arguments
-    while True:
-        e = Expression(act)
-        if act[0]:
-
             print(e[1], end="\n")
         if not TakeNext(','):
             return
+
 
 def DoExit(act):
     e = Expression(act)
@@ -381,24 +372,41 @@ def DoWrite(act):
     if act[0] or ident not in variable:
         variable[ident] = e
   
+def Increment(act):
+    global pc
+    ident = TakeNextAlNum()
+
+    e = Expression(act)
+
+    print(e[1])
+
+
+    if act[0] or ident not in variable:
+        variable[ident] = e
+
 def DoError(act):
     ident = TakeNextAlNum()
 
     e = Expression(act)
     line = str(source[:pc].count("\n"))
 
-    print(f"mince: {sys.argv[1]}:{line}: {e[1]}")
-    exit(1)
+    try:
+        print(f"mince: " + sys.argv[1] + ":" + str(line) + ":" + " " + e[1])
+        exit(1)
+    except TypeError as e:
+        raise e
 
     if act[0] or ident not in variable:
         variable[ident] = e
 
 def Statement(act):
 
-    if TakeString("print"):
+    if TakeString("inc"):
+        NotImplemented("Error: Not Implemented Yet!")
+    elif TakeString("dec"):
+        NotImplemented("Error: Not Implemented Yet!")
+    elif TakeString("print"):
         DoPrint(act)
-    elif TakeString("println"):
-        DoPrintLn(act)
     elif TakeString("exit"):
         DoExit(act)
     elif TakeString("return"):
@@ -407,7 +415,7 @@ def Statement(act):
         DoRead(act)
     elif TakeString("write"):
         DoWrite(act)
-    elif TakeString("system"):
+    elif TakeString("exec"):
         DoRun(act)
     elif TakeString("error"):
         DoError(act)
@@ -417,9 +425,9 @@ def Statement(act):
         DoWhile(act)
     elif TakeString("break"):
         DoBreak(act)
-    elif TakeString("call"):
+    elif TakeString("inv"):
         DoCallFun(act)
-    elif TakeString("define"):
+    elif TakeString("defun"):
         DoFunDef()
     else:
         DoAssign(act)
@@ -441,7 +449,12 @@ def Program():
 def Error(text):
     s = source[:pc].rfind("\n") + 1
     e = source.find("\n", pc)
-    print(Fore.RED + "\n[ERROR]: " + Fore.RESET + text + ": " + source[s:pc] + "_" + source[pc:e] + "'\n")
+
+    print("mince: " + sys.argv[1] + ":" +
+          str(source[:pc].count("\n")+1) + ": " +
+          text + " near " + "'" + source[s:pc] +
+          "_" + source[pc:e] + "'")
+
     sys.exit(1)
 
 
@@ -453,22 +466,20 @@ pc = 0
 variable = {}
 
 if len(sys.argv) < 2: 
-    print("Usage: mince [options] [file]")
+    print("Usage: mince <file>")
     print("No arguments provided!")
     exit(1)
 
 try:
     f = open(sys.argv[1], 'r')
 
+    # append a null termination
+    source = f.read() + '\0'
+
+    f.close()
+
+    Program()
+
 except FileNotFoundError:
     print("ERROR: Can't find source file \'" + sys.argv[1] + "\'.")
     sys.exit(1)
-
-    
-# append a null termination
-source = f.read() + '\0'
-
-
-f.close()
-
-Program()
