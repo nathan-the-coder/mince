@@ -3,7 +3,7 @@
 
 ### Examples
 
-```c
+```mince
 defun test {
   print "Hello from mince"
 
@@ -24,40 +24,62 @@ inv test
 > to '~/.config/nvim' for neovim or to '~/.vim' for vim.
 > and the syntax file [mc.vim](./editor/vim/mc.vim) to '~/.config/nvim/syntax' or '~/.vim/syntax'
 
-```console
-mkdir -p ~/.config/nvim/syntax # for neovim
-mkdir -p ~/.vim/syntax # for vim
+```bash
+$ mkdir -p ~/.config/nvim/syntax # for neovim
+$ mkdir -p ~/.vim/syntax # for vim
 
-cp ./editor/vim/mc.vim ~/.config/nvim/syntax # for neovim
-cp ./editor/vim/mc.vim ~/.vim/syntax # for vim
+$ cp ./editor/vim/mc.vim ~/.config/nvim/syntax # for neovim
+$ cp ./editor/vim/mc.vim ~/.vim/syntax # for vim
 
-cp ./editor/vim/filetype.vim ~/.config/nvim # for neovim
-cp ./editor/vim/filetype.vim ~/.vim # for vim
+$ cp ./editor/vim/filetype.vim ~/.config/nvim # for neovim
+$ cp ./editor/vim/filetype.vim ~/.vim # for vim
 
 ```
 
-> if you want to use mince outside of its directory 
-> you can install it using:
+> to use mince you can compile it using:
 
-```console
-./make install  # P.S not a make script
+```bash
+$ sudo make clean install # it will install mince to /usr/local/bin
 ```
+
 ##### For Windows
 > if your on Windows, it does not need any installation 
-> just clone this repo and you dont need to run the [make](./make) file
+> just do the things below
+> P.S use windows powershell to run these commands.
 
-```console
-git clone https://github.com/nathan-the-coder/mince  # assuming you have git installed 
-cd mince
+```bash
+> git clone https://github.com/nathan-the-coder/mince  # assuming you have git installed 
+> cd mince
+```
 
-# to run the file you made just:
-.\mince <your file>
+> if you want to use just python then you can just do:
+
+```bash
+#to run the file you made just:
+> .\mince.py # <your file>
 # or
-python3 .\mince <your file>
+> python3 .\mince.py # <your file>
+```
+
+> you must have mingw-w64 installed with make to compile it
+> if you want to compile it to machine code then just do:
+```bash
+# you must use windows powershell to be able to run these
+make  
+# to run it just 
+.\mince # <your file>
 ```
 
 > if you use neo/vim just do the steps above on how to apply the filetype 
 > and syntax support, but change the '~/.config/nvim' to '%userprofile%\AppData\Local\nvim'
+```bash
+# you must use windows powershell to be able to run these
+cp editor\vim\filetype.vim %userprofile%\AppData\Local\nvim
+
+mkdir %userprofile%\AppData\Local\nvim\syntax
+
+cp editor\vim\mc.vim %userprofile%\AppData\Local\nvim\syntax
+```
 > for vim change the '~/.vim' to '%userprofile%\AppData\Local\vim'
 > P.S idk exactly the location of the user config of vim on Windows
 
@@ -75,6 +97,8 @@ python3 .\mince <your file>
 > I did some refactoring of the code by making it simplier
 > and much more readable
 
+> I did made it to compile to machine code using Cython.
+
 ### Notes
 
 > for function there is no parameters,
@@ -84,5 +108,5 @@ python3 .\mince <your file>
 
 > this Language is not a toy language, 
 > I will continue improving this and 
-> maybe reimplement it in a different language 
-> like 'C' or 'Rust' or 'Lua'
+> with the capability to compile it 
+> to machine code, It will be much more nicer.

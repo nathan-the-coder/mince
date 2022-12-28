@@ -286,7 +286,7 @@ def DoFunDef():
 def DoAssign(act):
     ident = TakeNextAlNum()
 
-    if not TakeNext('=') or ident == "":
+    if not TakeNext(':') or ident == "":
         Error("unknown statement")
 
     e = Expression(act)
@@ -331,7 +331,7 @@ def DoPrint(act):
     while True:
         e = Expression(act)
         if act[0]:
-            print(e[1], end="\n")
+            print(e[1])
         if not TakeNext(','):
             return
 
@@ -452,7 +452,7 @@ def Error(text):
 
     print("mince: " + sys.argv[1] + ":" +
           str(source[:pc].count("\n")+1) + ": " +
-          text + " near " + "'" + source[s:pc] +
+          text + " near " + "\n\t'" + source[s:pc] +
           "_" + source[pc:e] + "'")
 
     sys.exit(1)
