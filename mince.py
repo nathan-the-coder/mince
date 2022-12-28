@@ -407,8 +407,6 @@ def Statement(act):
         NotImplemented("Error: Not Implemented Yet!")
     elif TakeString("print"):
         DoPrint(act)
-    elif TakeString("exit"):
-        DoExit(act)
     elif TakeString("return"):
         DoReturn(act)
     elif TakeString("read"):
@@ -417,7 +415,7 @@ def Statement(act):
         DoWrite(act)
     elif TakeString("exec"):
         DoRun(act)
-    elif TakeString("error"):
+    elif TakeString("panic"):
         DoError(act)
     elif TakeString("if"):
         DoIfElse(act)
