@@ -131,6 +131,12 @@ def MathFactor(act):
                 return False
             elif ident == "true":
                 return True
+            elif ident == "inv":
+                DoCallFun(act)
+            elif ident == "print":
+                DoPrint(act)
+            elif ident == "then" or ident == "end":
+                pass
             else:
                 Error("unknown variable")
         elif act[0]:
@@ -220,6 +226,13 @@ def Expression(act):
         return ('i', MathExpression(act))
 
 
+def WBlock(act):
+    if TakeNext("do"):
+        while not TakeNext("end"):
+            WBlock(act)
+    else:
+        Statement(act)
+
 def DoWhile(act):
     global pc
 
@@ -229,30 +242,44 @@ def DoWhile(act):
     pc_while = pc
 
     while BooleanExpression(local):
-        Block(local)
+        WBlock(local)
         pc = pc_while
 
     # scan over inactive block and leave while
-    Block([False])
+    WBlock([False])
 
+
+def IFBlock(act):
+    if TakeNext("then"):
+        while not TakeNext(""):
+            IFBlock(act)
+    else:
+        Statement(act)
+
+def ELSEBlock(act):
+    if TakeNext(""):
+        while not TakeNext("end"):
+            ELSEBlock(act)
+    else:
+        Statement(act)
 
 def DoIfElse(act):
     b = BooleanExpression(act)
 
     if act[0] and b:
         # process if block?
-        Block(act)
+        IFBlock(act)
     else:
-        Block([False])
+        IFBlock([False])
 
     Next()
 
     # process else block?
     if TakeString("else"):
         if act[0] and not b:
-            Block(act)
+            ELSEBlock(act)
         else:
-            Block([False])
+            ELSEBlock([False])
 
 
 def DoCallFun(act):
@@ -286,8 +313,11 @@ def DoFunDef():
 def DoAssign(act):
     ident = TakeNextAlNum()
 
-    if not TakeNext(':') or ident == "":
-        Error("unknown statement")
+    if ident == "then" or ident == "end":
+        pass
+    else:
+        if not TakeNext('=') or ident == "":
+            Error("unknown statement")
 
     e = Expression(act)
 
@@ -407,6 +437,8 @@ def Statement(act):
         NotImplemented("Error: Not Implemented Yet!")
     elif TakeString("print"):
         DoPrint(act)
+    elif TakeString("exit"):
+        DoExit(act)
     elif TakeString("return"):
         DoReturn(act)
     elif TakeString("read"):
@@ -432,8 +464,8 @@ def Statement(act):
 
 
 def Block(act):
-    if TakeNext("{"):
-        while not TakeNext("}"):
+    if TakeNext(""):
+        while not TakeNext("end"):
             Block(act)
     else:
         Statement(act)

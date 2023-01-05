@@ -14,8 +14,9 @@ $(EXEC):
 	$(CC) $(CFLAGS) $(EXEC).c -o $(EXEC) $(LIBS)
 
 
+clean:
+	rm $(EXEC).c $(EXEC)
+
 install: $(EXEC)
 	install mince /usr/local/bin
 
-clean:
-	rm $(EXEC).c $(EXEC)
