@@ -1,7 +1,5 @@
 
 defun test
-{
-
   write "test.mc" 
 "
 defun main {
@@ -11,7 +9,7 @@ defun main {
 
 inv main
 "
-}
+end
 
 
 inv test
