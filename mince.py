@@ -3,6 +3,7 @@
 import os
 import sys
 
+VERSION = 0.1
 
 # returns the current character while skipping over comments
 def Look():
@@ -133,6 +134,8 @@ def MathFactor(act):
                 return True
             elif ident == "inv":
                 DoCallFun(act)
+            elif ident == "defun":
+                DoFunDef()
             elif ident == "print":
                 DoPrint(act)
             elif ident == "then" or ident == "end":
@@ -488,6 +491,20 @@ def Error(text):
     sys.exit(1)
 
 
+def version():
+    print(f"""
+mince: version {VERSION} 
+by: Nathaniel Ramos <nathanielramos726@gmail.com>
+
+INFO:
+* The development started on July 7 2022
+""")
+
+def help():
+    print("HELP: mince <options> <file>")
+    print("options: ")
+    print("    -v | --version | show some information and mince version")
+    print("    -h | --help    | show this help menu")
 # --------------------------------------------------------------------------------------------------
 
 
@@ -500,16 +517,21 @@ if len(sys.argv) < 2:
     print("No arguments provided!")
     exit(1)
 
-try:
-    f = open(sys.argv[1], 'r')
+if sys.argv[1] == "-v" or sys.argv[1] == "--version":
+    version()
+elif sys.argv[1] == "-h" or sys.argv[1] == "--help":
+    help()
+else:
+    try:
+        f = open(sys.argv[1], 'r')
 
-    # append a null termination
-    source = f.read() + '\0'
+        # append a null termination
+        source = f.read() + '\0'
 
-    f.close()
+        f.close()
 
-    Program()
+        Program()
 
-except FileNotFoundError:
-    print("ERROR: Can't find source file \'" + sys.argv[1] + "\'.")
-    sys.exit(1)
+    except FileNotFoundError:
+        print("ERROR: Can't find source file \'" + sys.argv[1] + "\'.")
+        sys.exit(1)

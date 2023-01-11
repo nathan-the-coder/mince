@@ -49,33 +49,6 @@ $ sudo make install # it will install mince to /usr/local/bin
 ```
 
 ##### For Windows
-if your on Windows, it does not need any installation 
-just do the things below
-P.S use windows powershell to run these commands.
-
-```bash
-> git clone https://github.com/nathan-the-coder/mince  # assuming you have git installed 
-> cd mince
-```
-
-if you want to use just python then you can just do:
-
-```bash
-#to run the file you made just:
-> .\mince.py # <your file>
-# or
-> python3 .\mince.py # <your file>
-```
-
-> you must have mingw-w64 installed with make to compile it
-> if you want to compile it to machine code then just do:
-```bash
-# you must use windows powershell to be able to run these
-make  
-# to run it just 
-.\mince # <your file>
-```
-
 PS. idk how to compile mince to windows, because I use linux to build it
 
 if you use neo/vim just do the steps above on how to apply the filetype 

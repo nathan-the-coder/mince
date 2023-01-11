@@ -18,5 +18,5 @@ clean:
 	rm $(EXEC).c $(EXEC)
 
 install: $(EXEC)
-	install mince /usr/local/bin
+	install $(EXEC) /usr/local/bin
 

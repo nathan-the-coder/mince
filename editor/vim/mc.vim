@@ -50,7 +50,7 @@ syntax match luaFunc ":\@<=\k\+"
 syn region minceDescBlock start="{" end="}" fold transparent contains=minceNumber, minceFunc, minceTodo, minceCond, minceRepeat, minceStatement, minceDesc, minceBuiltin, minceOperator, minceComment, minceString, minceConstant
 
 syn keyword minceRepeat while
-syn keyword minceFunction defun
+syn keyword minceFunction defun end then
 syn keyword minceFunc print inv exec read write panic
 syn keyword minceStatement break return
 syn keyword minceConstant true false
@@ -64,6 +64,7 @@ hi def link minceBuiltin           Statement
 hi def link minceFunc              Identifier
 hi def link minceFunction          Function
 hi def link minceCond              Conditional
+hi def link minceCondElse          Conditional
 hi def link minceConstant          Constant
 hi def link minceString            String
 hi def link minceStringDelimiter   minceString
