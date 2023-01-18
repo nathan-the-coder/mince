@@ -1,12 +1,17 @@
 #!/usr/bin/env mince
 defun main
-  i = 3
+  var = 3
+  print "Variable 'var' default value"
+  print var
 
-  if i == 2 || i == 3 then
-    print "Okay"
-  else 
-    print "Not okay"
-  end
+  print "Incrementing var by 3"
+  inc "var" "3"
+  print var
+
+
+  print "Decrementing var by 1"
+  dec "var" "1"
+  print var
 end
 
 

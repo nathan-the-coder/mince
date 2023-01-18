@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
-
-import os
-import sys
-
+from os import system
+from sys import argv
+from time import time
 VERSION = 0.1
+
 
 # returns the current character while skipping over comments
 def Look():
@@ -347,7 +346,7 @@ def DoRun(act):
 
     e = Expression(act)
 
-    os.system(e[1])
+    system(e[1])
 
     if act[0] or ident not in variable:
         variable[ident] = e
@@ -406,25 +405,23 @@ def DoWrite(act):
         variable[ident] = e
   
 def Increment(act):
-    global pc
-    ident = TakeNextAlNum()
+    ident, e, f = TakeNextAlNum(), Expression(act), Expression(act)
+    new = list(variable[e[1]])
+    new[1] += int(f[1])
+    variable[e[1]] = tuple(new)
 
-    e = Expression(act)
+def Decrement(act):
+    ident, e, f = TakeNextAlNum(), Expression(act), Expression(act)
+    new = list(variable[e[1]])
+    new[1] -= int(f[1])
+    variable[e[1]] = tuple(new)
 
-    print(e[1])
-
-
-    if act[0] or ident not in variable:
-        variable[ident] = e
 
 def DoError(act):
-    ident = TakeNextAlNum()
-
-    e = Expression(act)
-    line = str(source[:pc].count("\n"))
+    ident, e, line = TakeNextAlNum(), Expression(act), str(source[:pc].count("\n"))
 
     try:
-        print(f"mince: " + sys.argv[1] + ":" + str(line) + ":" + " " + e[1])
+        print(f"mince: " + argv[1] + ":" + str(line) + ":" + " " + e[1])
         exit(1)
     except TypeError as e:
         raise e
@@ -435,9 +432,9 @@ def DoError(act):
 def Statement(act):
 
     if TakeString("inc"):
-        NotImplemented("Error: Not Implemented Yet!")
+        Increment(act)
     elif TakeString("dec"):
-        NotImplemented("Error: Not Implemented Yet!")
+        Decrement(act)
     elif TakeString("print"):
         DoPrint(act)
     elif TakeString("exit"):
@@ -480,58 +477,31 @@ def Program():
         Block(act)
 
 def Error(text):
-    s = source[:pc].rfind("\n") + 1
-    e = source.find("\n", pc)
+    s, e = source[:pc].rfind("\n") + 1, source.find("\n", pc)
 
-    print("mince: " + sys.argv[1] + ":" +
+    print("mince: " + argv[1] + ":" +
           str(source[:pc].count("\n")+1) + ": " +
           text + " near " + "\n\t'" + source[s:pc] +
           "_" + source[pc:e] + "'")
 
-    sys.exit(1)
-
-
-def version():
-    print(f"""
-mince: version {VERSION} 
-by: Nathaniel Ramos <nathanielramos726@gmail.com>
-
-INFO:
-* The development started on July 7 2022
-""")
-
-def help():
-    print("HELP: mince <options> <file>")
-    print("options: ")
-    print("    -v | --version | show some information and mince version")
-    print("    -h | --help    | show this help menu")
-# --------------------------------------------------------------------------------------------------
-
+    exit(1)
 
 pc = 0
-# program couter, identifier -> (type, value) lookup table
 variable = {}
 
-if len(sys.argv) < 2: 
+if len(argv) < 2: 
     print("Usage: mince <file>")
     print("No arguments provided!")
     exit(1)
 
-if sys.argv[1] == "-v" or sys.argv[1] == "--version":
-    version()
-elif sys.argv[1] == "-h" or sys.argv[1] == "--help":
-    help()
-else:
-    try:
-        f = open(sys.argv[1], 'r')
+try:
+    f = open(argv[1], 'r')
+    source = f.read() + '\0'
 
-        # append a null termination
-        source = f.read() + '\0'
+    f.close()
 
-        f.close()
+    Program()
 
-        Program()
-
-    except FileNotFoundError:
-        print("ERROR: Can't find source file \'" + sys.argv[1] + "\'.")
-        sys.exit(1)
+except FileNotFoundError:
+    print("ERROR: Can't find source file \'" + argv[1] + "\'.")
+    exit(1)

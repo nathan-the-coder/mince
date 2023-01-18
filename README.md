@@ -53,6 +53,7 @@ PS. idk how to compile mince to windows, because I use linux to build it
 
 if you use neo/vim just do the steps above on how to apply the filetype 
 and syntax support, but change the '~/.config/nvim' to '%userprofile%\AppData\Local\nvim'
+
 ```bash
 # you must use windows powershell to be able to run these
 cp editor\vim\filetype.vim %userprofile%\AppData\Local\nvim
@@ -61,26 +62,15 @@ mkdir %userprofile%\AppData\Local\nvim\syntax
 
 cp editor\vim\mc.vim %userprofile%\AppData\Local\nvim\syntax
 ```
-> for vim change the '~/.vim' to '%userprofile%\AppData\Local\vim'
-> P.S idk exactly the location of the user config of vim on Windows
+- for vim change the '~/.vim' to '%userprofile%\AppData\Local\vim'
+- P.S idk exactly the location of the user config of vim on Windows
 
 
 ### NEW
-> I am still trying to figure out how to implement
-> the incrementing and decrementing of a integer variable 
-
-- It is now became a compiled language thanks to Cython.
-- Changed the syntax similar with the lua syntax
+- (new) implemented a way to increment and decrement a variable, P.S cannot still be use it on while loops
 
 ### Notes
-
-> for function there is no parameters,
-> simply because I can't code it, 
-> I am only the one who code and implement 
-> all of the code.
-
-- It is not a toy Language
+- It will not be a toy Language
 - It is not turing complete.
-- The development will continue
 - It doesn't have some complex functionalities 
 that other 'popular' language have.
