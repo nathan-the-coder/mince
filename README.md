@@ -68,6 +68,7 @@ cp editor\vim\mc.vim %userprofile%\AppData\Local\nvim\syntax
 
 ### NEW
 - (new) implemented a way to increment and decrement a variable, P.S cannot still be use it on while loops
+- added sublime text syntax highlighting and sublime mince build system
 
 ### Notes
 - It will not be a toy Language
