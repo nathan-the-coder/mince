@@ -137,6 +137,14 @@ def MathFactor(act):
                 DoFunDef()
             elif ident == "print":
                 DoPrint(act)
+            elif ident == "inc":
+                Increment(act)
+            elif ident == "dec":
+                Decrement(act)
+            elif ident == "break":
+                DoBreak(act)
+            elif ident == "return":
+                DoReturn(act)
             elif ident == "then" or ident == "end":
                 pass
             else:
@@ -316,6 +324,10 @@ def DoAssign(act):
     ident = TakeNextAlNum()
 
     if ident == "then" or ident == "end":
+        pass
+    elif ident == "inc" or ident == "dec":
+        pass
+    elif ident == "do":
         pass
     else:
         if not TakeNext('=') or ident == "":
