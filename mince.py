@@ -237,10 +237,10 @@ def Expression(act):
         return ('i', MathExpression(act))
 
 
-def WBlock(act):
+def LBlock(act):
     if TakeNext("do"):
         while not TakeNext("end"):
-            WBlock(act)
+            LBlock(act)
     else:
         Statement(act)
 
@@ -253,11 +253,11 @@ def DoWhile(act):
     pc_while = pc
 
     while BooleanExpression(local):
-        WBlock(local)
+        LBlock(local)
         pc = pc_while
 
     # scan over inactive block and leave while
-    WBlock([False])
+    LBlock([False])
 
 
 def IFBlock(act):
@@ -441,6 +441,7 @@ def DoError(act):
 
     if act[0] or ident not in variable:
         variable[ident] = e
+
 
 def Statement(act):
 
