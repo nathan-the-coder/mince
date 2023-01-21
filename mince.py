@@ -1,6 +1,7 @@
 from os import system
 from sys import argv
 from time import time
+
 VERSION = 0.1
 
 

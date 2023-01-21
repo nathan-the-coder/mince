@@ -1,11 +1,10 @@
-defun test
 
-	i = 10
+defun main 
 
-	while i != 0 do
-		dec "i" "1"
-		print i
-	end
+  running = [ "1", "2", "3"]
+  print running
+
 end
 
-inv test
+
+inv main
