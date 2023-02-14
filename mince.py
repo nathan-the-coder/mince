@@ -2,7 +2,7 @@ from os import system
 from sys import argv
 from time import time
 
-VERSION = 0.1
+VERSION = 1.0
 
 
 # returns the current character while skipping over comments
@@ -82,9 +82,9 @@ def BooleanFactor(act):
         elif TakeString("!="):
             b = (b != MathExpression(act))
         elif TakeString("<="):
-            b = (b <= MathExpression(act))
+            b = (b <= MathExpression(act)+1)
         elif TakeString("<"):
-            b = (b < MathExpression(act))
+            b = (b < MathExpression(act)+1)
         elif TakeString(">="):
             b = (b >= MathExpression(act))
         elif TakeString(">"):
@@ -128,28 +128,7 @@ def MathFactor(act):
     else:
         ident = TakeNextAlNum()
         if ident not in variable or variable[ident][0] != 'i':
-            if ident == "false":
-                return False
-            elif ident == "true":
-                return True
-            elif ident == "inv":
-                DoCallFun(act)
-            elif ident == "defun":
-                DoFunDef()
-            elif ident == "print":
-                DoPrint(act)
-            elif ident == "inc":
-                Increment(act)
-            elif ident == "dec":
-                Decrement(act)
-            elif ident == "break":
-                DoBreak(act)
-            elif ident == "return":
-                DoReturn(act)
-            elif ident == "then" or ident == "end":
-                pass
-            else:
-                Error("unknown variable")
+            Error("unknown variable")
         elif act[0]:
             m = variable[ident][1]
     return m
@@ -198,6 +177,8 @@ def String(act):
                 Error("unexpected EOF")
             if TakeString("\\n"):
                 s += '\n'
+            elif TakeString("\\t"):
+                s += '\t'
             else:
                 s += Take()
     else:
@@ -237,13 +218,6 @@ def Expression(act):
         return ('i', MathExpression(act))
 
 
-def LBlock(act):
-    if TakeNext("do"):
-        while not TakeNext("end"):
-            LBlock(act)
-    else:
-        Statement(act)
-
 def DoWhile(act):
     global pc
 
@@ -253,44 +227,29 @@ def DoWhile(act):
     pc_while = pc
 
     while BooleanExpression(local):
-        LBlock(local)
+        Block(local)
         pc = pc_while
 
     # scan over inactive block and leave while
-    LBlock([False])
-
-
-def IFBlock(act):
-    if TakeNext("then"):
-        while not TakeNext(""):
-            IFBlock(act)
-    else:
-        Statement(act)
-
-def ELSEBlock(act):
-    if TakeNext(""):
-        while not TakeNext("end"):
-            ELSEBlock(act)
-    else:
-        Statement(act)
+    Block([False])
 
 def DoIfElse(act):
     b = BooleanExpression(act)
 
     if act[0] and b:
         # process if block?
-        IFBlock(act)
+        Block(act)
     else:
-        IFBlock([False])
+        Block([False])
 
     Next()
 
     # process else block?
     if TakeString("else"):
         if act[0] and not b:
-            ELSEBlock(act)
+            Block(act)
         else:
-            ELSEBlock([False])
+            Block([False])
 
 
 def DoCallFun(act):
@@ -308,7 +267,6 @@ def DoCallFun(act):
     # execute block as a subroutine
     pc = ret
 
-
 def DoFunDef():
     global pc
 
@@ -320,39 +278,23 @@ def DoFunDef():
     variable[ident] = ('p', pc)
     Block([False])
 
-
 def DoAssign(act):
     ident = TakeNextAlNum()
 
-    if ident == "then" or ident == "end":
-        pass
-    elif ident == "inc" or ident == "dec":
-        pass
-    elif ident == "do":
-        pass
-    else:
-        if not TakeNext('=') or ident == "":
-            Error("unknown statement")
+    if not TakeNext('=') or ident == "":
+        Error("unknown statement")
 
     e = Expression(act)
-
-    if e[1] == "false":
-        return 1
-    elif e[1] == "true":
-        return 0
 
     if act[0] or ident not in variable:
         # assert initialization even if block is inactive
         variable[ident] = e
-
 
 def DoReturn(act):
     ident = TakeNextAlNum()
     e = Expression(act)
     if act[0] or ident not in variable:
         variable[ident] = e
-    return e[1]
-
 
 def DoRun(act):
     ident = TakeNextAlNum()
@@ -376,16 +318,13 @@ def DoPrint(act):
     while True:
         e = Expression(act)
         if act[0]:
-            print(e[1])
+            print(e[1], end="")
         if not TakeNext(','):
             return
-
 
 def DoExit(act):
     e = Expression(act)
     exit(e[1])
-
-
 
 def DoRead(act):
     ident = TakeNextAlNum()
@@ -418,13 +357,17 @@ def DoWrite(act):
         variable[ident] = e
   
 def Increment(act):
-    ident, e, f = TakeNextAlNum(), Expression(act), Expression(act)
+    e = Expression(act) 
+    f =  Expression(act)
+
     new = list(variable[e[1]])
     new[1] += int(f[1])
     variable[e[1]] = tuple(new)
 
 def Decrement(act):
-    ident, e, f = TakeNextAlNum(), Expression(act), Expression(act)
+    e = Expression(act) 
+    f =  Expression(act)
+
     new = list(variable[e[1]])
     new[1] -= int(f[1])
     variable[e[1]] = tuple(new)
@@ -439,8 +382,34 @@ def DoError(act):
     except TypeError as e:
         raise e
 
-    if act[0] or ident not in variable:
-        variable[ident] = e
+    # if act[0] or ident not in variable:
+    #     variable[ident] = e
+
+def GetMinimum(act):
+    e = Expression(act)
+    f = Expression(act)
+    g = Expression(act)
+    h = Expression(act)
+    i = Expression(act)
+    l = [e[1], f[1], g[1], h[1], i[1]]
+
+    res = min(l)
+
+    variable["min"] = ('i', res)
+
+
+def GetMaximum(act):
+    e = Expression(act)
+    f = Expression(act)
+    g = Expression(act)
+    h = Expression(act)
+    i = Expression(act)
+
+    l = [e[1], f[1], g[1], h[1], i[1]]
+
+    res = max(l)
+
+    variable["max"] = ('i', res)
 
 
 def Statement(act):
@@ -449,6 +418,10 @@ def Statement(act):
         Increment(act)
     elif TakeString("dec"):
         Decrement(act)
+    elif TakeString("min"):
+        GetMinimum(act)
+    elif TakeString("max"):
+        GetMaximum(act)
     elif TakeString("print"):
         DoPrint(act)
     elif TakeString("exit"):
@@ -471,15 +444,15 @@ def Statement(act):
         DoBreak(act)
     elif TakeString("inv"):
         DoCallFun(act)
-    elif TakeString("defun"):
+    elif TakeString("def"):
         DoFunDef()
     else:
         DoAssign(act)
 
 
 def Block(act):
-    if TakeNext(""):
-        while not TakeNext("end"):
+    if TakeNext("{"):
+        while not TakeNext("}"):
             Block(act)
     else:
         Statement(act)
@@ -493,28 +466,67 @@ def Program():
 def Error(text):
     s, e = source[:pc].rfind("\n") + 1, source.find("\n", pc)
 
-    print("mince: " + argv[1] + ":" +
+    print("mince: " + argv[2] + ":" +
           str(source[:pc].count("\n")+1) + ": " +
           text + " near " + "\n\t'" + source[s:pc] +
           "_" + source[pc:e] + "'")
 
     exit(1)
 
+def usage():
+    print(f"Help: {argv[0]} [options] <file>")
+    print(" -h  --help | show this help menu and exit.")
+    print("commands:")
+    print(" run <file> | run/evaluate the file.")
+    print(" compile <file> | compile the file to c.")
+
+def show_version():
+    print(VERSION)
 pc = 0
 variable = {}
 
 if len(argv) < 2: 
-    print("Usage: mince <file>")
+    print("Usage: mince [options] <file>")
     print("No arguments provided!")
     exit(1)
 
 try:
-    f = open(argv[1], 'r')
-    source = f.read() + '\0'
+    if argv[1] == 'run' or argv[1] == '-r':
+        f = open(argv[2], 'r')
+        source = f.read() + '\0'
 
-    f.close()
+        f.close()
 
-    Program()
+        Program()
+    elif argv[1]== 'compile' or argv[1] == '-c':
+        NotImplemented("COMPILING TO C")
+    elif argv[1] == 'init' or argv[1] == '-i':
+        if argv[2] == '.':
+            system("touch Main.mc")
+            with open("Main.mc", "w") as f:
+                f.write("def main {\n")
+                f.write("   print \"Hello world\"\n")
+                f.write("}\n")
+                f.write("\n")
+                f.write("inv main\n")
+            system("git init -q")
+        else:
+            system(f"mkdir {argv[2]} && cd {argv[2]} && touch Main.mc && git init -q")
+            with open(f"{argv[2]}/Main.mc", "w") as f:
+                f.write("def main {\n")
+                f.write("   print \"Hello world\"\n")
+                f.write("}\n")
+                f.write("\n")
+                f.write("inv main\n")
+
+    elif argv[1] == '-h' or argv[1] == 'help':
+        usage()
+    elif argv[1] == '-V' or argv[1] == "--version":
+        show_version()
+    else:
+        print("Unrecognized option/command")
+        print("Try -h/--help to get help")
+        exit(1)
 
 except FileNotFoundError:
     print("ERROR: Can't find source file \'" + argv[1] + "\'.")

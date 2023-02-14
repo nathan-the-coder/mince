@@ -25,10 +25,10 @@ contexts:
     - match: '\b(if|else|while)\b'
       scope: keyword.control.mc 
 
-    - match: '\b(defun|inv|print|inc|dec)\b'
+    - match: '\b(def|inv|print|inc|dec|min|max|read|write)\b'
       scope: keyword.function.mc
 
-    - match: '\b(then|end|do|break|return)\b'
+    - match: '\b(break|return)\b'
       scope: keyword.others.mc
 
     # Numbers

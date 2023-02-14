@@ -1,5 +1,5 @@
-defun main
+def main {
   print "Hello, world"
-end
+}
 
 inv main

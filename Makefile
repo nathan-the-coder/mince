@@ -1,9 +1,9 @@
 CC=gcc
 CYTHON=cython
 
-CFLAGS=-I/usr/include/python3.10
+CFLAGS=`pkg-config --cflags python3`
 
-LIBS=-lpython3.10
+LIBS=-O2 -Wall -Wextra -lpython3.10
 
 EXEC=mince
 
@@ -20,3 +20,5 @@ clean:
 install: $(EXEC)
 	install $(EXEC) /usr/local/bin
 
+run:
+	python ./mince.py test.mc
