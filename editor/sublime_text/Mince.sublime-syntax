@@ -13,7 +13,7 @@ contexts:
       push: double_quoted_string
 
     # Comments begin with a '//' and finish at the end of the line
-    - match: '#'
+    - match: '//'
       scope: punctuation.definition.comment.mc
       push: line_comment
 
@@ -25,7 +25,7 @@ contexts:
     - match: '\b(if|else|while)\b'
       scope: keyword.control.mc 
 
-    - match: '\b(def|inv|print|inc|dec|min|max|read|write)\b'
+    - match: '\b(def|inv|print!|println!|inc|dec|min|max|read|write)\b'
       scope: keyword.function.mc
 
     - match: '\b(break|return)\b'

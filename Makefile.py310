@@ -1,20 +1,25 @@
-CFLAGS=`pkg-config --cflags python-3.11-embed`
+CFLAGS=`pkg-config --cflags python-3.10-embed`
 
-LIBS=`pkg-config --libs python-3.11-embed`
+LIBS=`pkg-config --libs python-3.10-embed`
 
 EXEC=mince
 
 all: install-cython
 
 activate-venv:
-	$(source ./venv/bin/activate)
+	ifeq ("$(SHELL)", "fish")
+		source ./venv/bin/activate.fish
+	ifeq ("$(SHELL)", "nu")
+		source ./venv/bin/activate.nu
+	else
+		source ./venv/bin/activate
 
 cython-compile: activate-venv
 	cython $(CFLAGS) --embed $(EXEC).py -3
 	$(CXX) $(CFLAGS) $(EXEC).c -o $(EXEC) $(LIBS)
 
 nuitka-compile: activate-venv	
-	nuitka3 mince.py -o mince
+	nuitka3 mince.py --jobs=$(nproc)	
 
 install-cython: cython-compile
 	install $(EXEC) /usr/local/bin
@@ -23,7 +28,7 @@ install-nuitka: nuitka-compile
 	install $(EXEC) /usr/local/bin
 
 clean-nuitka:
-	rm -rf $(EXEC).build $(EXEC) 
+	rm -r $(EXEC).build $(EXEC) 
 clean:
 	rm $(EXEC).c $(EXEC)
 

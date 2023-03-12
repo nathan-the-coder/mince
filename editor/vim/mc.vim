@@ -1,5 +1,5 @@
 " Vim syntax file
-" Language: Mince Programming Language
+" Language: mc Programming Language
 " Maintainer: Nathaniel Ramos <nathanielramos726@gmail.com>
 " Latest Revision: 31 July 2022
 
@@ -10,55 +10,55 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-syn keyword minceTodo contained TODO FIXME XXX NOTE
-syn match minceComment  "#.*$" contains=minceTodo,@Spell
-syn match minceComment "\%^#!.*"
+syn keyword mcTodo contained TODO FIXME XXX NOTE
+syn match mcComment  "(\*).*$" contains=mcTodo,@Spell
+syn match mcComment "\%^#!.*"
 
-syn match minceNumber "\<\d\+\>"
+syn match mcNumber "\<\d\+\>"
 " floating point number, with dot, optional exponent
-syn match minceNumber  "\<\d\+\.\d*\%([eE][-+]\=\d\+\)\="
+syn match mcNumber  "\<\d\+\.\d*\%([eE][-+]\=\d\+\)\="
 " floating point number, starting with a dot, optional exponent
-syn match minceNumber  "\.\d\+\%([eE][-+]\=\d\+\)\=\>"
+syn match mcNumber  "\.\d\+\%([eE][-+]\=\d\+\)\=\>"
 " floating point number, without dot, with exponent
-syn match minceNumber  "\<\d\+[eE][-+]\=\d\+\>"
+syn match mcNumber  "\<\d\+[eE][-+]\=\d\+\>"
 
-syn match  minceSpecial contained #\\[\\abfnrtv'"[\]]\|\\[[:digit:]]\{,3}#
+syn match  mcSpecial contained #\\[\\abfnrtv'"[\]]\|\\[[:digit:]]\{,3}#
 
-syn region minceString matchgroup=minceStringDelimiter start=+'+ end=+'+ skip=+\\\\\|\\'+ contains=minceSpecial,@Spell
-syn region minceString matchgroup=minceStringDelimiter start=+"+ end=+"+ skip=+\\\\\|\\"+ contains=minceSpecial,@Spell
-syn region minceDesc start='"' end='"'
+syn region mcString matchgroup=mcStringDelimiter start=+'+ end=+'+ skip=+\\\\\|\\'+ contains=mcSpecial,@Spell
+syn region mcString matchgroup=mcStringDelimiter start=+"+ end=+"+ skip=+\\\\\|\\"+ contains=mcSpecial,@Spell
+syn region mcDesc start='"' end='"'
 
-syn match minceFunction "\h\w*" display contained
-syntax match luaFunc ":\@<=\k\+"
+syn match mcFunction "\h\w*" display contained
+syntax match mcFunc ":\@<=\k\+"
 
-syn region minceDescBlock start="{" end="}" fold transparent contains=minceNumber, minceFunc, minceTodo, minceCond, minceRepeat, minceStatement, minceDesc, minceBuiltin, minceOperator, minceComment, minceString, minceConstant
+syn region mcDescBlock start="{" end="}" fold transparent contains=mcNumber, mcFunc, mcTodo, mcCond, mcRepeat, mcStatement, mcDesc, mcBuiltin, mcOperator, mcComment, mcString, mcConstant
 
-syn keyword minceRepeat while
-syn keyword minceFunction def end then
-syn keyword minceFunc print println inv exec read write panic min max inc dec
-syn keyword minceStatement break return
-syn keyword minceConstant true false
-syn keyword minceOperator or and
-
-
-hi def link minceTodo              Todo
-hi def link minceComment           Comment
-hi def link minceStatement         Statement
-hi def link minceBuiltin           Statement
-hi def link minceFunc              Identifier
-hi def link minceFunction          Function
-hi def link minceCond              Conditional
-hi def link minceCondElse          Conditional
-hi def link minceConstant          Constant
-hi def link minceString            String
-hi def link minceStringDelimiter   minceString
-hi def link minceDesc              Define
-hi def link minceNumber            Number
-hi def link minceRepeat            Repeat
-hi def link minceOperator          Operator
+syn keyword mcRepeat if else while
+syn keyword mcFunction def print
+syn keyword mcFunc print call exec read write panic min max let
+syn keyword mcStatement break return
+syn keyword mcConstant true false
+syn keyword mcOperator or and
 
 
-let b:current_syntax = "mince"
+hi def link mcTodo              Todo
+hi def link mcComment           Comment
+hi def link mcStatement         Statement
+hi def link mcBuiltin           Statement
+hi def link mcFunc              Identifier
+hi def link mcFunction          Function
+hi def link mcCond              Conditional
+hi def link mcCondElse          Conditional
+hi def link mcConstant          Constant
+hi def link mcString            String
+hi def link mcStringDelimiter   mcString
+hi def link mcDesc              Define
+hi def link mcNumber            Number
+hi def link mcRepeat            Repeat
+hi def link mcOperator          Operator
+
+
+let b:current_syntax = "mc"
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

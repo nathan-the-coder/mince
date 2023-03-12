@@ -1,17 +1,20 @@
+#!/usr/bin/env python3
 from os import system
 from sys import argv
-from time import time
+import re
 
-VERSION = 1.0
-
+# VARIABLES:
+pc = 0
+variable = {}
+mince_args = argv
 
 # returns the current character while skipping over comments
 def Look():
     # comments are entered by # and exited by \n or \0
     global pc
 
-    if source[pc] == '#':
-        while source[pc] != '\n' and source[pc] != '\0':
+    if source[pc] == '<' and source[pc+1] == '/' and source[pc+2] == '>':
+        while source[pc] != '\n' and source[pc+1] != '\0':
             # scan over comments here
             pc += 1
     return source[pc]
@@ -79,20 +82,20 @@ def BooleanFactor(act):
     if (e[0] == 'i'):
         if TakeString("=="):
             b = (b == MathExpression(act))
-        elif TakeString("!="):
+        if TakeString("!="):
             b = (b != MathExpression(act))
-        elif TakeString("<="):
-            b = (b <= MathExpression(act)+1)
-        elif TakeString("<"):
-            b = (b < MathExpression(act)+1)
-        elif TakeString(">="):
+        if TakeString("<="):
+            b = (b <= MathExpression(act))
+        if TakeString("<"):
+            b = (b < MathExpression(act))
+        if TakeString(">="):
             b = (b >= MathExpression(act))
-        elif TakeString(">"):
+        if TakeString(">"):
             b = (b > MathExpression(act))
     else:
         if TakeString("=="):
             b = (b == StringExpression(act))
-        elif TakeString("!="):
+        if TakeString("!="):
             b = (b != StringExpression(act))
         else:
             b = (b != "")
@@ -117,19 +120,31 @@ def BooleanExpression(act):
 
 
 def MathFactor(act):
+    global pc
     m = 0
     if TakeNext('('):
         m = MathExpression(act)
         if not TakeNext(')'):
             Error("missing ')'")
-    elif IsDigit(Next()):
+    if IsDigit(Next()):
         while IsDigit(Look()):
             m = 10 * m + ord(Take()) - ord('0')
     else:
         ident = TakeNextAlNum()
         if ident not in variable or variable[ident][0] != 'i':
+            print(ident)
+            if ident == 'args':
+                d = newValue(ident, source[pc])
+                d = variable[d]
+                pc -= 2
+                return d
+            if ident == 'len':
+                d = GetLength(act)
+                while not TakeNext(')'):
+                    pc += 1
+                return d
             Error("unknown variable")
-        elif act[0]:
+        if act[0]:
             m = variable[ident][1]
     return m
 
@@ -177,7 +192,7 @@ def String(act):
                 Error("unexpected EOF")
             if TakeString("\\n"):
                 s += '\n'
-            elif TakeString("\\t"):
+            if TakeString("\\t"):
                 s += '\t'
             else:
                 s += Take()
@@ -216,7 +231,6 @@ def Expression(act):
         return ('s', StringExpression(act))
     else:
         return ('i', MathExpression(act))
-
 
 def DoWhile(act):
     global pc
@@ -264,10 +278,25 @@ def DoCallFun(act):
 
     Block(act)
 
+
     # execute block as a subroutine
     pc = ret
 
-def DoFunDef():
+def match(value, char):
+    global pc
+    while re.match(r'[a-zA-Z]', char):
+        value += char
+        pc += 1
+        char = source[pc]
+    return value
+
+def newValue(value, char):
+    global pc
+    pc += 2
+    value2 = match(value, char)
+    return value2
+
+def DoFunDef(act):
     global pc
 
     ident = TakeNextAlNum()
@@ -276,18 +305,57 @@ def DoFunDef():
         Error("missing function identifier")
 
     variable[ident] = ('p', pc)
+    char = source[pc+1]
+
+    if ident == "main":
+        if source[++pc] == "(":
+            pc += 1
+            if re.match(r'[a-zA-Z]', char):
+                value = ''
+
+                value1 = match(value, char)
+                args = mince_args
+                variable[value1] = args
+                # print(variable[value1])
+
+                if not TakeNext(','):
+                    return
+                else: 
+                    pc -= 1
+                    value2 = newValue(value, char)
+                    variable[value2] = ''
+                    #print(variable[value2])
+
+
+                # variable[value] = 
+                
+
+        ret = pc
+        pc = variable[ident][1]
+
+        Block(act)
+        pc = ret
+
+
+    # TODO: elif not variable.get(id)
+    # TODO:   Error("missing main function!")
     Block([False])
 
 def DoAssign(act):
     ident = TakeNextAlNum()
 
-    if not TakeNext('=') or ident == "":
+
+    if not TakeNext("=") or ident == "":
         Error("unknown statement")
 
     e = Expression(act)
 
+    if not TakeNext(";"):
+        Error("missing ';' at the end of line")
+
     if act[0] or ident not in variable:
         # assert initialization even if block is inactive
+        # while re.match(r'[0-9]', varia)
         variable[ident] = e
 
 def DoReturn(act):
@@ -303,8 +371,8 @@ def DoRun(act):
 
     system(e[1])
 
-    if act[0] or ident not in variable:
-        variable[ident] = e
+    # if act[0] or ident not in variable:
+    #     variable[ident] = e
 
 
 def DoBreak(act):
@@ -318,13 +386,9 @@ def DoPrint(act):
     while True:
         e = Expression(act)
         if act[0]:
-            print(e[1], end="")
+            print(e[1], end='')
         if not TakeNext(','):
             return
-
-def DoExit(act):
-    e = Expression(act)
-    exit(e[1])
 
 def DoRead(act):
     ident = TakeNextAlNum()
@@ -332,11 +396,14 @@ def DoRead(act):
     f1 = Expression(act)
     e = Expression(act)
 
-    with open(f1[1], "r") as f:
-        if e is not None:
-            print(f.read(e[1]))
-        else:
-            print(f.read())
+    if e[1] is not None:
+        with open(f1[1], "r") as f:
+            res = f.read(e[1])
+            print(res)
+    else:
+        with open(f1[1], "r") as f:
+            res = f.read()
+            print(res)
 
     if act[0] or ident not in variable:
         variable[ident] = e
@@ -355,29 +422,32 @@ def DoWrite(act):
 
     if act[0] or ident not in variable:
         variable[ident] = e
-  
-def Increment(act):
-    e = Expression(act) 
-    f =  Expression(act)
 
-    new = list(variable[e[1]])
-    new[1] += int(f[1])
-    variable[e[1]] = tuple(new)
+def IDMD(act):
+    global pc
+    ident = TakeNextAlNum()
+    pc +=1
 
-def Decrement(act):
-    e = Expression(act) 
-    f =  Expression(act)
 
-    new = list(variable[e[1]])
-    new[1] -= int(f[1])
-    variable[e[1]] = tuple(new)
+    if TakeString("+=") and ident != "":
+        e = (variable[ident][0], variable[ident][1] + int(Next()))
+        variable[ident] = e
+    if TakeString("-=") and ident != "":
+        e = (variable[ident][0], variable[ident][1] - int(Next()))
+        variable[ident] = e
+    if TakeString("*=") and ident != "":
+        e = (variable[ident][0], variable[ident][1] * int(Next()))
+        variable[ident] = e
+    if TakeString("/=") and ident != "":
+        e = (variable[ident][0], variable[ident][1] / int(Next()))
+        variable[ident] = e
 
 
 def DoError(act):
     ident, e, line = TakeNextAlNum(), Expression(act), str(source[:pc].count("\n"))
 
     try:
-        print(f"mince: " + argv[1] + ":" + str(line) + ":" + " " + e[1])
+        print(f"mince: " + mince_args[1] + ":" + str(line) + ":" + " " + e[1])
         exit(1)
     except TypeError as e:
         raise e
@@ -398,6 +468,27 @@ def GetMinimum(act):
     variable["min"] = ('i', res)
 
 
+def GetLength(act):
+    global pc
+    ident =  TakeNextAlNum()
+    pc += 1
+    c = Next()
+    v = ''
+
+    while re.match(r'[a-zA-Z]', c):
+        v += c
+        pc += 1
+        c = source[pc]
+    if tuple(variable[v]):
+        variable[ident] = len(variable[v][1])
+    else:
+        variable[ident] = len(variable[v])
+    if v == 'args':
+        return variable[ident]-1
+    return variable[ident]
+    
+
+
 def GetMaximum(act):
     e = Expression(act)
     f = Expression(act)
@@ -411,46 +502,51 @@ def GetMaximum(act):
 
     variable["max"] = ('i', res)
 
+def RunFunction(func, act):
+    if TakeNext('('):
+        func(act)
+        if not TakeNext(')'):
+            Error("missing ')'")
+        if not TakeNext(';'):
+            Error("missing ';'")
+
 
 def Statement(act):
 
-    if TakeString("inc"):
-        Increment(act)
-    elif TakeString("dec"):
-        Decrement(act)
-    elif TakeString("min"):
-        GetMinimum(act)
+    if TakeString("min"):
+        RunFunction(GetMinimum, act)
     elif TakeString("max"):
-        GetMaximum(act)
+        RunFunction(GetMaximum, act)
     elif TakeString("print"):
-        DoPrint(act)
-    elif TakeString("exit"):
-        DoExit(act)
+        RunFunction(DoPrint, act)
     elif TakeString("return"):
-        DoReturn(act)
+        RunFunction(DoReturn, act)
     elif TakeString("read"):
         DoRead(act)
     elif TakeString("write"):
         DoWrite(act)
     elif TakeString("exec"):
-        DoRun(act)
+        RunFunction(DoRun, act)
     elif TakeString("panic"):
-        DoError(act)
+        RunFunction(DoError, act)
     elif TakeString("if"):
         DoIfElse(act)
     elif TakeString("while"):
         DoWhile(act)
     elif TakeString("break"):
         DoBreak(act)
-    elif TakeString("inv"):
+    elif TakeString("call"):
         DoCallFun(act)
     elif TakeString("def"):
-        DoFunDef()
-    else:
+        DoFunDef(act)
+    elif TakeString("let"):
         DoAssign(act)
+    else:
+        IDMD(act)
 
 
 def Block(act):
+    global pc
     if TakeNext("{"):
         while not TakeNext("}"):
             Block(act)
@@ -458,7 +554,7 @@ def Block(act):
         Statement(act)
 
 
-def Program():
+def run():
     act = [True]
     while Next() != '\0':
         Block(act)
@@ -466,68 +562,35 @@ def Program():
 def Error(text):
     s, e = source[:pc].rfind("\n") + 1, source.find("\n", pc)
 
-    print("mince: " + argv[2] + ":" +
+    print("mince: " + mince_args[1] + ":" +
           str(source[:pc].count("\n")+1) + ": " +
           text + " near " + "\n\t'" + source[s:pc] +
           "_" + source[pc:e] + "'")
 
     exit(1)
 
-def usage():
-    print(f"Help: {argv[0]} [options] <file>")
-    print(" -h  --help | show this help menu and exit.")
-    print("commands:")
-    print(" run <file> | run/evaluate the file.")
-    print(" compile <file> | compile the file to c.")
 
-def show_version():
-    print(VERSION)
-pc = 0
-variable = {}
-
-if len(argv) < 2: 
-    print("Usage: mince [options] <file>")
-    print("No arguments provided!")
-    exit(1)
-
-try:
-    if argv[1] == 'run' or argv[1] == '-r':
-        f = open(argv[2], 'r')
-        source = f.read() + '\0'
-
-        f.close()
-
-        Program()
-    elif argv[1]== 'compile' or argv[1] == '-c':
-        NotImplemented("COMPILING TO C")
-    elif argv[1] == 'init' or argv[1] == '-i':
-        if argv[2] == '.':
-            system("touch Main.mc")
-            with open("Main.mc", "w") as f:
-                f.write("def main {\n")
-                f.write("   print \"Hello world\"\n")
-                f.write("}\n")
-                f.write("\n")
-                f.write("inv main\n")
-            system("git init -q")
-        else:
-            system(f"mkdir {argv[2]} && cd {argv[2]} && touch Main.mc && git init -q")
-            with open(f"{argv[2]}/Main.mc", "w") as f:
-                f.write("def main {\n")
-                f.write("   print \"Hello world\"\n")
-                f.write("}\n")
-                f.write("\n")
-                f.write("inv main\n")
-
-    elif argv[1] == '-h' or argv[1] == 'help':
-        usage()
-    elif argv[1] == '-V' or argv[1] == "--version":
-        show_version()
-    else:
-        print("Unrecognized option/command")
-        print("Try -h/--help to get help")
+def main():
+    global source
+    if len(mince_args) < 2: 
+        print("Usage: mince [options] <file>")
+        print("No arguments provided!")
         exit(1)
 
+    f = open(mince_args[1], 'r')
+    source = f.read() + '\0'
+
+    f.close()
+
+    run()
+
+try:
+
+    if __name__ == '__main__':
+        main()
+    else:
+        source = ''
+
 except FileNotFoundError:
-    print("ERROR: Can't find source file \'" + argv[1] + "\'.")
+    print("ERROR: Can't find source file \'" + mince_args[1] + "\'.")
     exit(1)
