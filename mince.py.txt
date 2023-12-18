@@ -2,12 +2,7 @@
 
 import os
 import sys
-
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-os.environ["SDL_VIDEODRIVER"] = "dummy"
-
-import pygame
-
+import time
 
 # returns the current character while skipping over comments
 def Look():
@@ -138,13 +133,7 @@ def MathFactor(act):
     else:
         ident = TakeNextAlNum()
         if ident not in variable or variable[ident][0] != 'i':
-            if ident == "false":
-                return False
-            elif ident == "true":
-                return True
-
-            else:
-                Error("unknown variable")
+            Error("unknown variable")
         elif act[0]:
             m = variable[ident][1]
     return m
@@ -218,9 +207,7 @@ def Expression(act):
     ident = TakeNextAlNum()
     # scan for identifier or "str"
     pc = copypc
-    if(Next() == '\"' or ident == "str"
-            or ident == "input"
-            or (ident in variable and variable[ident][0] == 's')):
+    if(Next() == '\"' or (ident in variable and variable[ident][0] == 's')):
         return ('s', StringExpression(act))
     else:
         return ('i', MathExpression(act))
@@ -236,7 +223,6 @@ def DoWhile(act):
         pc = pc_while
     # scan over inactive block and leave while
     Block([False])
-
 
 def DoIfElse(act):
     b = BooleanExpression(act)
@@ -254,11 +240,39 @@ def DoIfElse(act):
             Block([False])
 
 
+param_count = 0
 def DoCallFun(act):
-    global pc
+    global pc, param_count
     ident = TakeNextAlNum()
     if ident not in variable or variable[ident][0] != 'p':
         Error("unknown function")
+
+    if param_count != 0:
+        if TakeNext("("):
+            arg1 = TakeNextAlNum()
+
+            if TakeNext(":"):
+                value = ""
+
+                if IsDigit(source[pc]):
+                    while IsDigit(source[pc]):
+                        value += source[pc]
+                        pc += 1
+                    variable[arg1] = ('s', value)
+                elif source[pc] == '"':
+                    pc += 1
+                    while source[pc] != '"':
+                        value += source[pc]
+                        pc += 1
+                    pc+= 1
+
+                    variable[arg1] = ('s', value)
+            if param_count == 2:
+                pass
+
+    if not TakeNext(")"):
+        Error("missing ')'")
+
     ret = pc
     pc = variable[ident][1]
     Block(act)
@@ -267,12 +281,51 @@ def DoCallFun(act):
 
 
 def DoFunDef():
-    global pc
+    global pc, param_count
 
     ident = TakeNextAlNum()
 
     if ident == "":
         Error("missing function identifier")
+
+    if TakeNext("("):
+        param1 = TakeNextAlNum()
+        if param1 != "":
+            param_count += 1
+            if TakeNext(":"):
+                value = ""
+                if IsDigit(source[pc]):
+                    while IsDigit(source[pc]):
+                        value += source[pc]
+                        pc += 1
+                    variable[param1] = ('s', value)
+                elif source[pc] == '"':
+                    pc += 1
+                    while source[pc] != '"':
+                        value += source[pc]
+                        pc += 1
+                    pc+= 1
+
+                    variable[param1] = ('s', value)
+            else:
+                variable[param1] = ('s', '')
+
+        if TakeNext(','):
+            param2 = TakeNextAlNum()
+            param_count += 1
+
+            if TakeNext(":"):
+                value = ""
+                while len(source) < 0 and source[pc].isdigit():
+                    value += source[pc]
+                print(value)
+                variable[param2] = ('s', Next())
+
+            variable[param2] = ('s', '')
+
+    if not TakeNext(")"):
+        Error("missing ')'")
+
 
     variable[ident] = ('p', pc)
     Block([False])
@@ -302,7 +355,6 @@ def DoReturn(act):
     e = Expression(act)
     if act[0] or ident not in variable:
         variable[ident] = e
-    return e[1]
 
 
 def DoRun(act):
@@ -327,7 +379,7 @@ def DoPrint(act):
     while True:
         e = Expression(act)
         if act[0]:
-            print(e[1], end="")
+            print(e[1], end="\n")
         if not TakeNext(','):
             return
 
@@ -365,53 +417,44 @@ def DoWrite(act):
     if act[0] or ident not in variable:
         variable[ident] = e
 
-
-def InitWindow(act):
-
-    ident = TakeNextAlNum()
-
-    e = Expression(act)
-    f = Expression(act)
-    g = Expression(act)
-
-    pygame.init()
-    pygame.display.set_mode((e[1], f[1]))
-    pygame.display.set_caption(g[1])
-
-    if act[0] or ident not in variable:
-        variable[ident] = e
-
-
 def DoError(act):
+    # process comma-separated arguments
+    while True:
+        e = Expression(act)
+        line = str(source[:pc].count("\n"))
+        if act[0]:
+            print(f"mince: {sys.argv[1]}:{line}: {e[1]}")
+            exit(1)
+        # if not TakeNext(','):
+        #     return
+
+def DoIncrement(act):
     ident = TakeNextAlNum()
+    print(ident)
 
     e = Expression(act)
-    line = str(source[:pc].count("\n"))
+    e2 = list(e)
 
+    n= e2.pop()
+    n += 1
+    e2.append(n)
+ 
     if act[0] or ident not in variable:
-        variable[ident] = e
-
-    print(f"mince: {sys.argv[1]}:{line}: {e[1]}")
-    exit(-1)
-
+        variable[ident] = (e[0], e[1])
 
 def Statement(act):
-    if TakeString("exit"):
-        DoExit(act)
-    elif TakeString("return"):
-        DoReturn(act)
+    if TakeString("echo"):
+        DoPrint(act)
+    elif TakeString("inc"):
+        DoIncrement(act)
     elif TakeString("system"):
         DoRun(act)
     elif TakeString("error"):
         DoError(act)
     elif TakeString("break"):
         DoBreak(act)
-
-    if TakeString("InitWindow"):
-        InitWindow(act)
-
-    if TakeString("echo"):
-        DoPrint(act)
+    elif TakeString("exit"):
+        DoExit(act)
     elif TakeString("read"):
         DoRead(act)
     elif TakeString("write"):

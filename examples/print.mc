@@ -1,8 +1,9 @@
-# define the main function
+// define the main function
 define hello { 
-    println! "This is the parent function"
+    echo "This is the parent function\n"
     define nested {
-        println! "This is a child function"
+        echo "This is a child function\n"
+    }
     
     call nested
 }
