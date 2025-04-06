@@ -136,8 +136,18 @@ def MathFactor(act):
             Error("missing ')'")
     else:
         ident = TakeNextAlNum()
+
+        function_params = {}
+
+        for v in variables:
+            func = variables[v]
+            if func[0] == 'p':
+                for param in func[-1]:
+                    function_params[param] = func[-1][param]
+
         if ident not in variables or variables[ident][0] != 'i':
-            Error("unknown variables")
+            if ident not in function_params:
+                Error(f"unknown variables: '{ident}'")
         elif act[0]:
             m = variables[ident][1]
     return m
@@ -255,60 +265,55 @@ def DoIfElse(act):
 
 param_count = 0
 def DoCallFun(act):
-    global pc, param_count
+    global pc
+    # 1) read the function name
     ident = TakeNextAlNum()
     if ident not in variables or variables[ident][0] != 'p':
-        Error("unknown function")
+        Error(f"unknown function '{ident}'")
 
-    if param_count != 0:
-        if TakeNext("("):
-            arg1 = TakeNextAlNum()
+    # unpack the stored function info
+    _, func_pc, func_params = variables[ident]
+    param_names = list(func_params.keys())
 
-            if TakeNext(":"):
-                value = ""
-
-                if IsDigit(source[pc]):
-                    while IsDigit(source[pc]):
-                        value += source[pc]
-                        pc += 1
-                    variables[arg1] = ('s', value)
-                elif source[pc] == '"':
-                    pc += 1
-                    while source[pc] != '"':
-                        value += source[pc]
-                        pc += 1
-                    pc+= 1
-
-                    variables[arg1] = ('s', value)
-
-    if TakeNext(",") and not TakeNext(')'):
-            arg2 = TakeNextAlNum()
-
-            if TakeNext(":"):
-                value = ""
-
-                if IsDigit(source[pc]):
-                    while IsDigit(source[pc]):
-                        value += source[pc]
-                        pc += 1
-                    variables[arg2] = ('s', value)
-                elif source[pc] == '"':
-                    pc += 1
-                    while source[pc] != '"':
-                        value += source[pc]
-                        pc += 1
-                    pc+= 1
-
-                    variables[arg2] = ('s', value)
-
+    # 2) parse *all* of the call-site arguments as full Expressions
+    args = []
+    if not TakeNext("("):
+        Error("missing '(' after function name")
     if not TakeNext(")"):
-        Error("missing ')'")
+        # there is at least one argument
+        while True:
+            arg = Expression(act)
+            args.append(arg)
+            if TakeNext(")"):
+                break
+            if not TakeNext(","):
+                Error("missing ',' between arguments")
 
-    ret = pc
-    pc = variables[ident][1]
+    # 3) arity check
+    if len(args) != len(param_names):
+        Error(f"'{ident}' expects {len(param_names)} args, got {len(args)}")
+
+    # 4) bind them into variables, saving any old values so we can restore
+    old_bindings = {}
+    for name, val in zip(param_names, args):
+        if name in variables:
+            old_bindings[name] = variables[name]
+        variables[name] = val
+
+    # 5) jump into the function body
+    ret_pc = pc
+    pc = func_pc
     Block(act)
-    # execute block as a subroutine
-    pc = ret
+
+    # 6) come back here
+    pc = ret_pc
+
+    # 7) restore the caller’s variables
+    for name in param_names:
+        if name in old_bindings:
+            variables[name] = old_bindings[name]
+        else:
+            del variables[name]
 
 def DoImport(act):
     e = Expression(act)
@@ -322,6 +327,7 @@ def DoFunDef():
     global pc, param_count
 
     ident = TakeNextAlNum()
+    params = {}
 
     if ident == "":
         Error("missing function identifier")
@@ -336,7 +342,7 @@ def DoFunDef():
                     while IsDigit(source[pc]):
                         value += source[pc]
                         pc += 1
-                    variables[param1] = ('s', value)
+                    params[param1] = ('s', value)
                 elif source[pc] == '"':
                     pc += 1
                     while source[pc] != '"':
@@ -344,9 +350,9 @@ def DoFunDef():
                         pc += 1
                     pc+= 1
 
-                    variables[param1] = ('s', value)
+                    params[param1] = ('s', value)
             else:
-                variables[param1] = ('s', '')
+                params[param1] = ('s', '')
 
         if TakeNext(','):
             param2 = TakeNextAlNum()
@@ -357,15 +363,15 @@ def DoFunDef():
                 while len(source) < 0 and source[pc].isdigit():
                     value += source[pc]
                 print(value)
-                variables[param2] = ('s', Next())
+                params[param2] = ('s', Next())
 
-            variables[param2] = ('s', '')
+            params[param2] = ('s', '')
 
     if not TakeNext(")"):
         Error("missing ')'")
 
 
-    variables[ident] = ('p', pc)
+    variables[ident] = ('p', pc, params)
     Block([False])
 
 
@@ -417,7 +423,7 @@ def DoPrint(act):
     while True:
         e = Expression(act)
         if act[0]:
-            print(e[1], end="")
+            print(e[1])
         if not TakeNext(','):
             return
 
@@ -480,33 +486,42 @@ def DoIncrement(act):
     if act[0] or ident not in variables:
         variables[ident] = (e[0], e[1])
 
+def RequireParens(name, func, act):
+    if not TakeNext('('):
+        Error(f"missing '(' after {name}")
+
+    func(act)
+
+    if not TakeNext(')'):
+        Error(f"missing ')' after {name}")
+
 def Statement(act):
     if debug:
         print(variables)
-    if TakeString("echo"):
-        DoPrint(act)
+    if TakeString("print"):
+        RequireParens("print", DoPrint, act)
     elif TakeString("inc"):
-        DoIncrement(act)
-    elif TakeString("sh"):
-        DoRun(act)
+        RequireParens("inc", DoIncrement, act)
+    elif TakeString("exec"):
+        RequireParens("run", DoRun, act)
     elif TakeString("error"):
-        DoError(act)
+        RequireParens("error", DoError, act)
     elif TakeString("break"):
         DoBreak(act)
     elif TakeString("read"):
-        DoRead(act)
+        RequireParens("read", DoRead, act)
     elif TakeString("write"):
-        DoWrite(act)
+        RequireParens("write", DoWrite, act)
     elif TakeString("if"):
         DoIfElse(act)
     elif TakeString("while"):
         DoWhile(act)
     elif TakeString("for"):
         DoFor(act)
-    elif TakeString("call"):
-        DoCallFun(act)
     elif TakeString("define"):
         DoFunDef()
+    elif TakeString("call"):
+        DoCallFun(act)
     elif TakeString("use"):
         DoImport(act)
     else:
