@@ -1,15 +1,16 @@
-use "std"
+using "std"
+
 // define the main function
-define hello(x, y) { 
+proc hello(x, y) { 
     print("This is the parent function")
     print(x)
     print("This is y: ${y}")
 }
 
-define loop() {
+proc loop() {
   x = 3
   print(x)
 }
 
-call hello("Hello world", 1)
-call loop()
+inv hello("Hello world", 1)
+inv loop()

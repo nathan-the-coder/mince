@@ -3,10 +3,10 @@
 
 import os
 import sys
-import time
 
 modules = ["tk"]
 debug = False
+
 
 # returns the current character while skipping over comments
 def Look():
@@ -128,12 +128,6 @@ def MathFactor(act):
     elif IsDigit(Next()):
         while IsDigit(Look()):
             m = 10 * m + ord(Take()) - ord('0')
-    elif TakeString("val("):
-        s = String(act)
-        if act[0] and s.isdigit():
-            m = int(s)
-        if not TakeNext(')'):
-            Error("missing ')'")
     else:
         ident = TakeNextAlNum()
 
@@ -190,30 +184,104 @@ def MathExpression(act):
 def String(act):
     s = ""
     # is it a literal string?
-    if TakeNext('\"'):
-        while not TakeString("\""):
-            if Look() == '\0':
-                Error("unexpected EOF")
+    if TakeNext('"'):
+        while True:
+            # escaped newline
             if TakeString("\\n"):
                 s += '\n'
+            # escape qoute
+            elif TakeString("\\\""):
+                s += "\""
+            # Interpolation start
+            elif TakeString("${"):
+                # parse any Expression
+                expr = Expression(act)
+                if not TakeNext("}"):
+                    Error("missing '}' in string interpolation")
+                # splice its text form
+                s += str(expr[1])
+            # end of string
+            elif Look() == '"':
+                Take()
+                break
+            elif Look() == '\0':
+                Error("unexpected EOF in string literal")
+            # plain character
             else:
                 s += Take()
+
     else:
         ident = TakeNextAlNum()
         if ident in variables and variables[ident][0] == 's':
             s = variables[ident][1]
         else:
-            Error("not a string")
+            if ident in variables and variables[ident][0] == 'i':
+                s = s + str(variables[ident][1])
+            # Error("not a string")
+
     return s
 
 
 def StringExpression(act):
     s = String(act)
+
     while TakeNext('+'):
         # string addition = concatenation
         s += String(act)
     return s
 
+
+def DataExpression(act):
+    global pc
+    data = {}  # Store the parsed fields
+    
+    # Parse the type (User, for example)
+    type_name = TakeNextAlNum()  # "User"
+    if not type_name:
+        Error("Expected type name before '{'")
+    
+    # Expect '{' after the type name to start parsing fields
+    if not TakeNext("{"):
+        Error("Expected '{' to start object definition")
+    Next()
+    
+    while True:
+        # Parse the field names and values
+        field_name = TakeNextAlNum()
+        if not field_name:
+            break  # No more fields
+        
+        # Expect '=' to start assignment of the field value
+        if not TakeNext(":"):
+              Error("Expected ':' after field name")
+        Next()
+
+        # Parse the field value (could be string, number, etc.)
+        field_value = ValueExpression(act)
+        
+        # Store the field in the object
+        data[field_name] = field_value
+        
+        # Expect a comma or '}' to end the field definition
+        if Look() == ',':
+            Take()
+        elif Look() == '}':
+            Take()
+            break
+        else:
+            Error("Expected ',' or '}' after field value")
+
+    return type_name, data  # Return the type and the parsed fields as a dictionary
+
+def ValueExpression(act):
+    # This handles the value for fields (could be a string, number, or other)
+    # Example: string, number, etc.
+    if Look() == '"':
+        return StringExpression(act)  # Call your existing StringExpression if it's a string
+    elif Look().isdigit():  # Simple number check (could be expanded for more types)
+        return MathExpression(act)  # Assuming the value is a number
+    else:
+        Error("Unsupported value type")
 
 def Expression(act):
     global pc
@@ -221,13 +289,15 @@ def Expression(act):
     ident = TakeNextAlNum()
     # scan for identifier or "str"
     pc = copypc
-    if(Next() == '\"' or (ident in variables and variables[ident][0] == 's')):
+    if Next() == '\"' or (ident in variables and variables[ident][0] == 's'):
         return ('s', StringExpression(act))
+    elif ident in variables and variables[ident][0] == 'd':
+        return ('d', DataExpression(act))
     else:
         return ('i', MathExpression(act))
 
 
-def DoWhile(act):
+def ParseWhile(act):
     global pc
     local = [act[0]]
     # save PC of the while statement
@@ -239,7 +309,7 @@ def DoWhile(act):
     Block([False])
 
 
-def DoIfElse(act):
+def ParseIf(act):
     b = BooleanExpression(act)
     if act[0] and b:
         # process if block?
@@ -247,13 +317,20 @@ def DoIfElse(act):
     else:
         Block([False])
     Next()
-    if TakeString("elif"):
+    # process else block?
+    if TakeString("else"):
         if act[0] and not b:
             Block(act)
-        elif not act[0] and b:
-            Block([b])
         else:
             Block([False])
+
+def ParseElseIf(act):
+    b = BooleanExpression(act)
+    if act[0] and not b:
+        # process if block?
+        Block(act)
+    else:
+        Block([False])
     Next()
     # process else block?
     if TakeString("else"):
@@ -264,7 +341,9 @@ def DoIfElse(act):
 
 
 param_count = 0
-def DoCallFun(act):
+
+
+def ParseCallExpr(act):
     global pc
     # 1) read the function name
     ident = TakeNextAlNum()
@@ -315,15 +394,32 @@ def DoCallFun(act):
         else:
             del variables[name]
 
-def DoImport(act):
+
+def ParseImport(act):
     e = Expression(act)
 
     if e[1] in modules:
         variables['m'] = e
 
 
+def ParseDataDecl(act):
+    global pc
 
-def DoFunDef():
+    ident = TakeNextAlNum()
+
+    data = {}
+
+    variables[ident] = ('d', pc, data)
+
+    ret_pc = pc
+    pc = ret_pc
+    Block(act)
+
+    data.update(variables)
+ 
+
+
+def ParseFuncDecl():
     global pc, param_count
 
     ident = TakeNextAlNum()
@@ -348,7 +444,7 @@ def DoFunDef():
                     while source[pc] != '"':
                         value += source[pc]
                         pc += 1
-                    pc+= 1
+                    pc += 1
 
                     params[param1] = ('s', value)
             else:
@@ -370,12 +466,11 @@ def DoFunDef():
     if not TakeNext(")"):
         Error("missing ')'")
 
-
     variables[ident] = ('p', pc, params)
     Block([False])
 
 
-def DoAssign(act):
+def ParseAssignment(act):
     ident = TakeNextAlNum()
 
     if not TakeNext('=') or ident == "":
@@ -387,7 +482,6 @@ def DoAssign(act):
         return 1
     elif e[1] == "true":
         return 0
-
 
     if act[0] or ident not in variables:
         # assert initialization even if block is inactive
@@ -401,7 +495,7 @@ def DoReturn(act):
         variables[ident] = e
 
 
-def DoRun(act):
+def ParseExec(act):
     ident = TakeNextAlNum()
 
     e = Expression(act)
@@ -412,13 +506,13 @@ def DoRun(act):
         variables[ident] = e
 
 
-def DoBreak(act):
+def ParseBreak(act):
     if act[0]:
         # switch off execution within enclosing loop (while, ...)
         act[0] = False
 
 
-def DoPrint(act):
+def ParsePrint(act):
     # process comma-separated arguments
     while True:
         e = Expression(act)
@@ -433,7 +527,7 @@ def DoExit(act):
     exit(e[1])
 
 
-def DoRead(act):
+def ParseRead(act):
     ident = TakeNextAlNum()
 
     f1 = Expression(act)
@@ -449,7 +543,7 @@ def DoRead(act):
         variables[ident] = e
 
 
-def DoWrite(act):
+def ParseWrite(act):
     ident = TakeNextAlNum()
 
     e = Expression(act)
@@ -461,30 +555,33 @@ def DoWrite(act):
     if act[0] or ident not in variables:
         variables[ident] = e
 
-def DoError(act):
+
+def ParseRaise(act):
     # process comma-separated arguments
     while True:
         e = Expression(act)
-        line = str(source[:pc].count("\n"))
         if act[0]:
-            print(f"mince: {sys.argv[1]}:{line}: {e[1]}")
+            print(f"{e[1]}")
             exit(1)
         # if not TakeNext(','):
         #     return
 
-def DoIncrement(act):
+
+def ParseInc(act):
     ident = TakeNextAlNum()
     print(ident)
 
     e = Expression(act)
     e2 = list(e)
 
-    n= e2.pop()
+    n = e2.pop()
     n += 1
     e2.append(n)
- 
+
     if act[0] or ident not in variables:
         variables[ident] = (e[0], e[1])
+
+
 
 def RequireParens(name, func, act):
     if not TakeNext('('):
@@ -495,37 +592,40 @@ def RequireParens(name, func, act):
     if not TakeNext(')'):
         Error(f"missing ')' after {name}")
 
+
 def Statement(act):
     if debug:
         print(variables)
     if TakeString("print"):
-        RequireParens("print", DoPrint, act)
+        RequireParens("print", ParsePrint, act)
     elif TakeString("inc"):
-        RequireParens("inc", DoIncrement, act)
+        RequireParens("inc", ParseInc, act)
     elif TakeString("exec"):
-        RequireParens("run", DoRun, act)
-    elif TakeString("error"):
-        RequireParens("error", DoError, act)
+        RequireParens("exec", ParseExec, act)
+    elif TakeString("raise"):
+        RequireParens("raise", ParseRaise, act)
     elif TakeString("break"):
-        DoBreak(act)
+        ParseBreak(act)
     elif TakeString("read"):
-        RequireParens("read", DoRead, act)
+        RequireParens("read", ParseRead, act)
     elif TakeString("write"):
-        RequireParens("write", DoWrite, act)
+        RequireParens("write", ParseWrite, act)
     elif TakeString("if"):
-        DoIfElse(act)
+        ParseIf(act)
+    elif TakeString("elseif"):
+        ParseElseIf(act)
     elif TakeString("while"):
-        DoWhile(act)
-    elif TakeString("for"):
-        DoFor(act)
-    elif TakeString("define"):
-        DoFunDef()
-    elif TakeString("call"):
-        DoCallFun(act)
-    elif TakeString("use"):
-        DoImport(act)
+        ParseWhile(act)
+    elif TakeString("proc"):
+        ParseFuncDecl()
+    elif TakeString("data"):
+        ParseDataDecl(act)
+    elif TakeString("inv"):
+        ParseCallExpr(act)
+    elif TakeString("using"):
+        ParseImport(act)
     else:
-        DoAssign(act)
+        ParseAssignment(act)
 
 
 def Block(act):
