@@ -18,6 +18,7 @@ class Interpreter:
         self.variables = {}
         self.ignored_chars = [' ', '\r', '\n', '\t' ]
         self.scope = "global"
+        self.on_repl = True
 
     # returns the current character while skipping over comments
     def Look(self) -> str:
@@ -164,11 +165,11 @@ class Interpreter:
             while self.Look().isdigit():
                 left = 10 * left + ord(self.Take()) - ord('0')
         else:
+            self.Next()
             ident = self.TakeNextAlNum()
             # If the ident is not inside the symbol table,
             # or if the variable named by the value of `ident` type is not of number,
             # returns an error using the intepreters main error handler. 
-            print(self.variables) # This should not be empty
             if ident not in self.variables or self.variables[ident][0] != 'i':
                 self.Error("unknown variable")
             if act[0]:
@@ -222,7 +223,6 @@ class Interpreter:
 
 
     def String(self, act: list[bool]) -> str:
-        print(act)
         s = ""
         # is it a literal string?
         # Check if the next token is a '"'
@@ -347,7 +347,6 @@ class Interpreter:
         return value2
 
     def DoFunDef(self, act):
-        print(act)
         ident = self.TakeNextAlNum()
 
         if ident == "":
@@ -371,7 +370,7 @@ class Interpreter:
             # assert initialization even if block is inactive
             # while re.match(r'[0-9]', varia)
             self.variables[ident] = e
-
+        
     def DoReturn(self, act):
         ident = self.TakeNextAlNum()
         e = self.Expression(act)
@@ -406,7 +405,7 @@ class Interpreter:
         while True:
             e = self.Expression(act)
             if act[0]:
-                print(e[1], end='')
+                print(e[1])
             if not self.TakeNext(','):
                 return
 
@@ -470,8 +469,6 @@ class Interpreter:
 
 
     def Statement(self, act):
-        
-        print(self.variables)
 
         keywords = {
                 "min":      self.GetMinimum,
@@ -517,19 +514,18 @@ class Interpreter:
               text + " near " + "\n\t'" + self.source[s:self.pc] +
               "_" + self.source[self.pc:e] + "'")
 
-        exit(1)
+        if not self.on_repl:
+            exit(1)
 
-def run(source: str):
-    interp = Interpreter(source)
+def run(interp: Interpreter):
     act = [True]
     while interp.Next() != '\0':
         interp.Block(act)
 
-def runPrompt():
+def runPrompt(interp: Interpreter):
     while True:
         try:
             source = input("mince > ")
-
             # Parse repl commands (outside of tokens)
             if source.startswith(";"):
                 command = source.strip(";")
@@ -542,30 +538,31 @@ def runPrompt():
                         print(f"Unrecognized repl command found: '{command}'")
                         break
             else:
-            
+                interp.source = source
+                interp.pc = 0
                 # Start the interpreter
-                run(source) 
+                run(interp)
         except KeyboardInterrupt:
             print("\nBye!")
             break
 
 
 
-def runFile(path: str):
-    source = ""
+def runFile(interp, path: str):
     try:
 
         f = open(path, 'r')
-        source = f.read() + '\0'
+        interp.source = f.read() + '\0'
 
         f.close()
     except FileNotFoundError:
         print("ERROR: Can't find source file \'" + path + "\'.")
         exit(1)
-    run(source)
+    run(interp)
 
 if __name__ == '__main__':
+    interp = Interpreter("")
     if len(mince_args) == 1: 
-        runPrompt()
+        runPrompt(interp)
     else:
-        runFile(argv[1])
+        runFile(interp, argv[1])
