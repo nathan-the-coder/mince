@@ -19,6 +19,11 @@ class Interpreter:
         self.ignored_chars = [' ', '\r', '\n', '\t' ]
         self.scope = "global"
         self.on_repl = True
+        self.hadError = False
+
+        self.types = {
+            "s": "string", "i": "int", "f": "float", "b": "bool", "fn": "function"
+        }
 
     # returns the current character while skipping over comments
     def Look(self) -> str:
@@ -76,6 +81,8 @@ class Interpreter:
 
     # --------------------------------------------------------------------------------------------------
 
+    def LookupType(self, type_alias: str): 
+        return self.types[type_alias]
 
     def BooleanFactor(self, act: list[bool]) -> bool:
         inv = self.TakeNext('!')
@@ -165,11 +172,13 @@ class Interpreter:
             while self.Look().isdigit():
                 left = 10 * left + ord(self.Take()) - ord('0')
         else:
-            self.Next()
             ident = self.TakeNextAlNum()
             # If the ident is not inside the symbol table,
             # or if the variable named by the value of `ident` type is not of number,
             # returns an error using the intepreters main error handler. 
+            if not ident:
+                self.Error("expected a name")
+
             if ident not in self.variables or self.variables[ident][0] != 'i':
                 self.Error("unknown variable")
             if act[0]:
@@ -320,14 +329,23 @@ class Interpreter:
     def DoCallFun(self, act):
         ident = self.TakeNextAlNum()
 
-        if ident not in self.variables or self.variables[ident][0] != 'p':
+        print(ident, self.variables[ident])
+        if ident not in self.variables or self.variables[ident][0] != 'fn':
             self.Error("unknown function")
 
         ret = self.pc
         self.pc = self.variables[ident][1]
-
+        print(f"self.variables: {self.variables}, self.pc: {self.pc}, ret: {ret}")
         self.Block(act)
 
+        # execute block as a subroutine
+        self.pc = ret
+
+    def ExecFun(self, ident, act):
+        ret = self.pc
+        self.pc = self.variables[ident][1]
+        print(self.variables)
+        self.Block(act)
 
         # execute block as a subroutine
         self.pc = ret
@@ -351,20 +369,24 @@ class Interpreter:
 
         if ident == "":
             self.Error("missing function identifier")
+        
+        if self.Next() != "{":
+            self.Error("missing '{' after function definition")
 
-        self.variables[ident] = ('p', self.pc)
+        block_start = self.pc - 1  # position of '{'
+        self.variables[ident] = ('fn', block_start)
         self.Block([False])
 
     def DoAssign(self, act):
+        # Get the assignee name for the variable 
         ident = self.TakeNextAlNum()
 
+        # Checks if the ident is empty or the next char isnt '=', as it is expects, if it is not so then return an error.
         if not self.TakeNext("=") or ident == "":
             self.Error("unknown statement")
 
+        # parse new expression after assign 
         e = self.Expression(act)
-
-        if not self.TakeNext(";"):
-            self.Error("missing ';' at the end of line")
 
         if act[0] or ident not in self.variables:
             # assert initialization even if block is inactive
@@ -403,9 +425,18 @@ class Interpreter:
     def DoPrint(self, act):
         # process comma-separated arguments
         while True:
+
+            if not self.TakeString("("):
+                self.Error("Missing '(' after 'print'")
+                
+
             e = self.Expression(act)
+
+            if not self.TakeString(")"):
+                self.Error("Missing ')' after expression")
+
             if act[0]:
-                print(e[1])
+                print(f"{self.LookupType(e[0])}:   {e[1]}")
             if not self.TakeNext(','):
                 return
 
@@ -459,15 +490,6 @@ class Interpreter:
 
         variable["max"] = ('i', res)
 
-    def RunFunction(self, func, act):
-        if self.TakeNext('('):
-            func(act)
-            if not self.TakeNext(')'):
-                self.Error("missing ')'")
-            if not self.TakeNext(';'):
-                self.Error("missing ';'")
-
-
     def Statement(self, act):
 
         keywords = {
@@ -487,15 +509,22 @@ class Interpreter:
                 "let":      self.DoAssign,
                 }
 
-        for kw in keywords.keys():
-            if self.TakeString(kw):
-                keywords[kw](act)
-                return
-# If nothing matches, skip or error
-        if self.pc < len(self.source) and self.source[self.pc] not in self.ignored_chars:
-            self.pc += 1  # Skip unknown character
-        else:
-            self.Error("Unknown statement or token")
+            
+        # Skip ignored characters
+        if self.Next() in self.ignored_chars:
+            return
+
+        # Get the next token without consuming it
+        # Direct dictionary lookup 
+        ident = self.TakeNextAlNum()
+        if ident in keywords:
+            keywords[ident](act)
+            return
+        elif ident in self.variables and self.variables[ident][0] == 'fn':
+            print(ident)
+            self.ExecFun(ident, act)
+
+        self.Error("Unknown statement or token")
 
 
     def Block(self, act):
@@ -509,13 +538,18 @@ class Interpreter:
     def Error(self, text: str):
         s, e = self.source[:self.pc].rfind("\n") + 1, self.source.find("\n", self.pc)
 
-        print("mince: " + ":" +
-              str(self.source[:self.pc].count("\n")+1) + ": " +
-              text + " near " + "\n\t'" + self.source[s:self.pc] +
-              "_" + self.source[self.pc:e] + "'")
+        itype = mince_args[1] if not self.on_repl else "stdin"
+        msg = ("mince:" + itype + ":" +
+            str(self.source[:self.pc].count("\n")+1) + ": " +
+            text + " near " + "\n\t'" + self.source[s:self.pc] +
+            "_" + self.source[self.pc:e] + "'")
 
+        self.hadError = True
         if not self.on_repl:
+            print(msg)
             exit(1)
+        else:
+            raise RuntimeError(msg)
 
 def run(interp: Interpreter):
     act = [True]
@@ -538,10 +572,15 @@ def runPrompt(interp: Interpreter):
                         print(f"Unrecognized repl command found: '{command}'")
                         break
             else:
-                interp.source = source
-                interp.pc = 0
+                interp.source = source + '\n'
+                interp.pc = len(interp.source) - len(source) - 1 # Staart of the new input
+                interp.on_repl = True
                 # Start the interpreter
-                run(interp)
+                try:
+                    run(interp)
+                except Exception as e:
+                    print(e.args[0] if hasattr(e, 'args') and e.args else str(e))
+
         except KeyboardInterrupt:
             print("\nBye!")
             break
@@ -553,6 +592,7 @@ def runFile(interp, path: str):
 
         f = open(path, 'r')
         interp.source = f.read() + '\0'
+        interp.on_repl = False
 
         f.close()
     except FileNotFoundError:
