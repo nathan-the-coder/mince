@@ -164,7 +164,7 @@ class Interpreter:
         if self.TakeNext('('):
             left = self.MathExpression(act)
             if not self.TakeNext(')'):
-                self.Error("missing ')'")
+                self.Error("Missed symbol ')'")
         if self.Next().isdigit():
             # While the current token is digit increment the `m` variable and making sure 
             # it aligns well with base10 and by converting the taken token value into python integer,
@@ -180,7 +180,7 @@ class Interpreter:
                 self.Error("expected a name")
 
             if ident not in self.variables or self.variables[ident][0] != 'i':
-                self.Error("unknown variable")
+                self.Error(f"Undefined global {ident}")
             if act[0]:
                 # asign the left value to the value of the variable of the name inside of ident
                 left = self.variables[ident][1]
@@ -331,11 +331,10 @@ class Interpreter:
 
         print(ident, self.variables[ident])
         if ident not in self.variables or self.variables[ident][0] != 'fn':
-            self.Error("unknown function")
+            self.Error(f"unknown function '{ident}'")
 
         ret = self.pc
         self.pc = self.variables[ident][1]
-        print(f"self.variables: {self.variables}, self.pc: {self.pc}, ret: {ret}")
         self.Block(act)
 
         # execute block as a subroutine
@@ -368,10 +367,20 @@ class Interpreter:
         ident = self.TakeNextAlNum()
 
         if ident == "":
-            self.Error("missing function identifier")
+            self.Error("<name> expected.")
+
+        # Check for the start of  the  parenthesis that would contain parameters
+        if not self.TakeNext("("):
+            self.Error("Missed symbol '('")
+
+        #TODO: Parse parameters here.... 
+
+        # Check for the start of  the  parenthesis that would contain parameters
+        if not self.TakeNext(")"):
+            self.Error("Missed symbol ')'")
         
         if self.Next() != "{":
-            self.Error("missing '{' after function definition")
+            self.Error("Missed symbol '{'")
 
         block_start = self.pc - 1  # position of '{'
         self.variables[ident] = ('fn', block_start)
@@ -383,7 +392,7 @@ class Interpreter:
 
         # Checks if the ident is empty or the next char isnt '=', as it is expects, if it is not so then return an error.
         if not self.TakeNext("=") or ident == "":
-            self.Error("unknown statement")
+            self.Error("<expr> expected")
 
         # parse new expression after assign 
         e = self.Expression(act)
@@ -399,8 +408,6 @@ class Interpreter:
         if self.scope == "function":
             if act[0] or ident not in self.variables:
                 variable[ident] = e
-        else:
-            self.Error("Illegal `return` outside of function")
 
     def DoRun(self, act):
         # ident = self.TakeNextAlNum()
@@ -419,7 +426,7 @@ class Interpreter:
                 # switch off execution within enclosing loop (while, ...)
                 act[0] = False
         else:
-            self.Error("Illegal `break` outside of loop")
+            self.Error("<break> not inside a loop")
 
 
     def DoPrint(self, act):
@@ -427,13 +434,13 @@ class Interpreter:
         while True:
 
             if not self.TakeString("("):
-                self.Error("Missing '(' after 'print'")
+                self.Error("Missed symbol '('")
                 
 
             e = self.Expression(act)
 
             if not self.TakeString(")"):
-                self.Error("Missing ')' after expression")
+                self.Error("Missed symbol ')'")
 
             if act[0]:
                 print(f"{self.LookupType(e[0])}:   {e[1]}")
@@ -524,7 +531,7 @@ class Interpreter:
             print(ident)
             self.ExecFun(ident, act)
 
-        self.Error("Unknown statement or token")
+        self.Error("Unexpected expression or statement")
 
 
     def Block(self, act):
@@ -538,54 +545,19 @@ class Interpreter:
     def Error(self, text: str):
         s, e = self.source[:self.pc].rfind("\n") + 1, self.source.find("\n", self.pc)
 
-        itype = mince_args[1] if not self.on_repl else "stdin"
-        msg = ("mince:" + itype + ":" +
+        msg = ("mince:" + mince_args[1] + ":" +
             str(self.source[:self.pc].count("\n")+1) + ": " +
             text + " near " + "\n\t'" + self.source[s:self.pc] +
             "_" + self.source[self.pc:e] + "'")
 
         self.hadError = True
-        if not self.on_repl:
-            print(msg)
-            exit(1)
-        else:
-            raise RuntimeError(msg)
+        print(msg)
+        exit(1)
 
 def run(interp: Interpreter):
     act = [True]
     while interp.Next() != '\0':
         interp.Block(act)
-
-def runPrompt(interp: Interpreter):
-    while True:
-        try:
-            source = input("mince > ")
-            # Parse repl commands (outside of tokens)
-            if source.startswith(";"):
-                command = source.strip(";")
-                match command:
-                    case "exit":
-                        break
-                    case "help":
-                        print("TODO: Implement repl help menu")
-                    case _:
-                        print(f"Unrecognized repl command found: '{command}'")
-                        break
-            else:
-                interp.source = source + '\n'
-                interp.pc = len(interp.source) - len(source) - 1 # Staart of the new input
-                interp.on_repl = True
-                # Start the interpreter
-                try:
-                    run(interp)
-                except Exception as e:
-                    print(e.args[0] if hasattr(e, 'args') and e.args else str(e))
-
-        except KeyboardInterrupt:
-            print("\nBye!")
-            break
-
-
 
 def runFile(interp, path: str):
     try:
@@ -602,7 +574,8 @@ def runFile(interp, path: str):
 
 if __name__ == '__main__':
     interp = Interpreter("")
-    if len(mince_args) == 1: 
-        runPrompt(interp)
+    if len(mince_args) < 2:
+        print("No arguments provided.")
+        print("Example usage: ./mince.py <file>")
     else:
         runFile(interp, argv[1])
