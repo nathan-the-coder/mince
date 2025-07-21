@@ -382,7 +382,6 @@ class Interpreter:
 
         ret = self.pc
 
-        print(1, 'func')
         func = self.get_variable(ident)
         self.pc = func.block_start
         value = 0
@@ -392,6 +391,7 @@ class Interpreter:
             self.Block(act)
         except ReturnException as re:
             value = re.value
+
         self.pop_scope()
         self.pc = ret
 
@@ -451,14 +451,13 @@ class Interpreter:
         # parse new expression after assign 
         e = self.Expression(act)
 
-        if act[0] or ident not in self.variables:
+        if act[0] == True:
             # assert initialization even if block is inactive
             # while re.match(r'[0-9]', varia)
-            if self.scope == "function":
-                func = self.call_stack[-1]
+            # print("Assigning", ident, "to", e, "in scope", id(self.variables)) 
             self.variables[ident] = e
+            # print("Scopes after assign:", self.scopes)
         
-        print(self.scopes)
     def DoReturn(self, act):
         e = self.Expression(act)
         if act[0]:
@@ -544,7 +543,7 @@ class Interpreter:
 
         res = min(value)
 
-        variable["min"] = ('i', res)
+        self.variables["min"] = ('i', res)
 
     def GetMaximum(self, act):
 
@@ -552,7 +551,7 @@ class Interpreter:
 
         res = max(value)
 
-        variable["max"] = ('i', res)
+        self.variables["max"] = ('i', res)
 
     def Statement(self, act):
 
@@ -585,7 +584,8 @@ class Interpreter:
             keywords[ident](act)
             return
 
-        if ident in self.variables and isinstance(self.variables[ident], FunctionValue):
+        val = self.get_variable(ident)
+        if isinstance(val, FunctionValue):
             self.DoCallFun(act, ident)
             return
 
