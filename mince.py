@@ -22,7 +22,7 @@ class Interpreter:
         self.hadError = False
 
         self.types = {
-            "s": "string", "i": "int", "f": "float", "b": "bool", "fn": "function"
+                "s": "string", "i": "int", "f": "float", "b": "bool", "fn": "function", "v": "void"
         }
 
     # returns the current character while skipping over comments
@@ -343,7 +343,6 @@ class Interpreter:
     def ExecFun(self, ident, act):
         ret = self.pc
         self.pc = self.variables[ident][1]
-        print(self.variables)
         self.Block(act)
 
         # execute block as a subroutine
@@ -383,8 +382,11 @@ class Interpreter:
             self.Error("Missed symbol '{'")
 
         block_start = self.pc - 1  # position of '{'
-        self.variables[ident] = ('fn', block_start)
+
+        self.scope = "function"
+        self.variables[ident] = ('fn', block_start, 0)
         self.Block([False])
+        self.scope = "global"
 
     def DoAssign(self, act):
         # Get the assignee name for the variable 
@@ -403,11 +405,11 @@ class Interpreter:
             self.variables[ident] = e
         
     def DoReturn(self, act):
-        ident = self.TakeNextAlNum()
         e = self.Expression(act)
         if self.scope == "function":
-            if act[0] or ident not in self.variables:
-                variable[ident] = e
+            if act[0]:
+                print(self.TakeNextAlNum())
+
 
     def DoRun(self, act):
         # ident = self.TakeNextAlNum()
@@ -527,17 +529,16 @@ class Interpreter:
         if ident in keywords:
             keywords[ident](act)
             return
+
         elif ident in self.variables and self.variables[ident][0] == 'fn':
-            print(ident)
             self.ExecFun(ident, act)
 
         self.Error("Unexpected expression or statement")
 
-
     def Block(self, act):
         if self.TakeNext("{"):
             while not self.TakeNext("}"):
-                self.Block(act)
+                self.Statement(act)
         else:
             self.Statement(act)
 

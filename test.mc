@@ -1,12 +1,8 @@
 
-fnc test() {
-  print("outer")
-
-  fnc test1() {
-    print("inner")
-  }
-
-  call test1
+fnc add() {
+  let x = 5
+  return x + 2
 }
 
-call test
+let test = call add
+print(test)
