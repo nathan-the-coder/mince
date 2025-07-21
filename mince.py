@@ -9,6 +9,9 @@ pc = 0
 variable = {}
 mince_args = argv
 
+class ReturnException(Exception):
+    def __init__(self, value):
+        self.value = value
 
 ExprValue = str | int | float | None
 
@@ -25,9 +28,10 @@ class Interpreter:
     def __init__(self, source: str) -> None:
         self.source = source
         self.pc = 0
-        self.variables = {}
+        # self.variables = {}
         self.ignored_chars = [' ', '\r', '\n', '\t' ]
         self.scope = "global"
+        self.scopes = [{}]
         self.on_repl = True
         self.hadError = False
 
@@ -36,6 +40,22 @@ class Interpreter:
         self.types = {
                 "s": "string", "i": "int", "f": "float", "b": "bool", "fn": "function", "v": "void"
         }
+
+    @property
+    def variables(self):
+        return self.scopes[-1]
+
+    def push_scope(self):
+        self.scopes.append({})
+
+    def pop_scope(self):
+        self.scopes.pop()
+
+    def get_variable(self, name):
+        for scope in reversed(self.scopes):
+            if name in scope:
+                return scope[name]
+        self.Error(f"Undefined variable '{name}'")
 
     # returns the current character while skipping over comments
     def Look(self) -> str:
@@ -177,7 +197,7 @@ class Interpreter:
             left = self.MathExpression(act)
             if not self.TakeNext(')'):
                 self.Error("Missed symbol ')'")
-        if self.Next().isdigit():
+        elif self.Next().isdigit():
             # While the current token is digit increment the `m` variable and making sure 
             # it aligns well with base10 and by converting the taken token value into python integer,
             # and adding them to `m` while also converting it to a `real` integer from `ascii`
@@ -191,16 +211,19 @@ class Interpreter:
             if not ident:
                 self.Error("expected a name")
 
-            if ident in self.variables and isinstance(self.variables[ident], FunctionValue):
+            # Try to get the variable from any scope
+            value = self.get_variable(ident)
+
+            if isinstance(value, FunctionValue):
                 rtype, value = self.DoCallFun(act, ident)
                 return value
 
 
-            elif ident not in self.variables or isinstance(self.variables[ident], tuple) and self.variables[ident][0] != 'i':
+            elif not isinstance(value, tuple) and value[0] != 'i':
                 self.Error(f"Undefined global {ident}")
-            if act[0] and isinstance(self.variables[ident], tuple):
+            if act[0]:
                 # asign the left value to the value of the variable of the name inside of ident
-                left = self.variables[ident][1]
+                left = value[1]
         return left
 
 
@@ -272,11 +295,13 @@ class Interpreter:
             # if it isn't a literal string, get the identifier from the lexer.
             ident = self.TakeNextAlNum()
 
+            # Try to get the variable from any scope
+            value = self.get_variable(ident)
             # then check if the identifier found is in the symbol table, 
             # and if the type of the identifier is a string,
-            if ident in self.variables and self.variables[ident][0] == 's':
+            if value[0] == 's':
                 # if so then assign the value of the identifier to the `s` variable return.
-                s = self.variables[ident][1]
+                s = value[1]
             else:
                 # else returns an error that it isn't a string.
                 self.Error("not a string")
@@ -293,25 +318,29 @@ class Interpreter:
 
     def Expression(self, act) -> tuple[str, ExprValue]:
         copypc = self.pc
-
         ident = self.TakeNextAlNum()
-
-        # scan for identifier
         self.pc = copypc
-        
-        # if the next token is a string literal, or 
-        # if the identifier is a string type variable
-        # return the respective symbol for string an integer, 
+
+        # If the next token is a string literal
         if self.Next() == '"':
-            # return a symbol that corresponds to String Node
             return ("s", self.StringExpression(act))
-        if (ident in self.variables
-             and isinstance(self.variables[ident], tuple) 
-             and self.variables[ident][0] == 's'):
-            # return a symbol that corresponds to String Node
-            return ("s", self.StringExpression(act))
+
+        # If the next token is a digit, parse as a number
+        if self.Next().isdigit():
+            return ("i", self.MathExpression(act))
+
+        # If the next token is an identifier, check if it's a string variable
+        ident = self.TakeNextAlNum()
+        if ident:
+            value = self.get_variable(ident)
+            if isinstance(value, tuple) and value[0] == 's':
+                return ("s", self.StringExpression(act))
+            else:
+                # Not a string variable, treat as number
+                self.pc = copypc  # rewind to parse as MathExpression
+                return ("i", self.MathExpression(act))
         else:
-            # if it isn't a string literal, then return a number symbol using the MathExpression return value as the value of the symbol
+            # If not a string, digit, or identifier, treat as number expression
             return ("i", self.MathExpression(act))
 
     def DoWhile(self, act):
@@ -352,28 +381,25 @@ class Interpreter:
             self.Error("Missed '(' symbol.")
 
         ret = self.pc
-        self.pc = self.variables[ident].block_start
-        self.Block(act)
+
+        print(1, 'func')
+        func = self.get_variable(ident)
+        self.pc = func.block_start
+        value = 0
+
+        self.push_scope()
+        try:
+            self.Block(act)
+        except ReturnException as re:
+            value = re.value
+        self.pop_scope()
         self.pc = ret
 
         if not self.TakeNext(')'):
             self.Error("Missed ')' symbol.")
 
-        # If not return, default to 0
-        value = self.variables[ident].return_value
-        if value is None:
-            value = 0
-
-        rtype = "s" if isinstance(self.variables[ident].return_value, str) else "i"
+        rtype = "s" if isinstance(func.return_value, str) else "i"
         return (rtype, value) 
-
-    def ExecFun(self, ident, act):
-        ret = self.pc
-        self.pc = self.variables[ident].block_start
-        self.Block(act)
-
-        # execute block as a subroutine
-        self.pc = ret
 
     def match(self, value, char):
         global pc
@@ -410,11 +436,9 @@ class Interpreter:
 
         block_start = self.pc - 1  # position of '{'
 
-        self.scope = "function"
         self.variables[ident] = FunctionValue(ident, block_start)
         self.call_stack.append(ident)
         self.Block([False])
-        self.scope = "global"
 
     def DoAssign(self, act):
         # Get the assignee name for the variable 
@@ -434,11 +458,11 @@ class Interpreter:
                 func = self.call_stack[-1]
             self.variables[ident] = e
         
+        print(self.scopes)
     def DoReturn(self, act):
         e = self.Expression(act)
-        if self.scope == "function":
-            current_func = self.call_stack[-1]
-            self.variables[current_func].return_value = e[1]
+        if act[0]:
+            raise ReturnException(e[1])
 
 
     def DoRun(self, act):
@@ -494,12 +518,13 @@ class Interpreter:
                 }
 
         if ident != "":
-            val = ""
+            v = ""
             for sym in symbols.keys():
                 if self.TakeString(sym):
                     c = self.Next()
-                    val = symbols[sym](self.variables[ident][1], int(c))
-            self.variables[ident] = (variable[ident][0], val)
+                    value = self.get_variable(ident)
+                    v = symbols[sym](value[1], int(c))
+            self.variables[ident] = (variable[ident][0], v)
 
     def DoError(self, act):
         e, line = self.Expression(act), str(self.source[:self.pc].count("\n"))
