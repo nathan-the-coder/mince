@@ -1,8 +1,14 @@
 
 fnc add() {
   let x = 5
-  return x + 2
+  return 5
 }
 
-let test = call add
+let test = add()
 print(test)
+
+fnc dep() {
+  print(1)
+}
+
+dep()

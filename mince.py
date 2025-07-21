@@ -10,7 +10,17 @@ variable = {}
 mince_args = argv
 
 
-ExprValue = str | int | float
+ExprValue = str | int | float | None
+
+class FunctionValue:
+    def __init__(self, name: str, block_start: int, params=None):
+        self.name = name
+        self.block_start: int = block_start
+        self.params = params or []
+        self.return_value: int = 0
+        self.variables = {}  # function-local variables
+
+
 class Interpreter:
     def __init__(self, source: str) -> None:
         self.source = source
@@ -20,6 +30,8 @@ class Interpreter:
         self.scope = "global"
         self.on_repl = True
         self.hadError = False
+
+        self.call_stack = []
 
         self.types = {
                 "s": "string", "i": "int", "f": "float", "b": "bool", "fn": "function", "v": "void"
@@ -179,9 +191,14 @@ class Interpreter:
             if not ident:
                 self.Error("expected a name")
 
-            if ident not in self.variables or self.variables[ident][0] != 'i':
+            if ident in self.variables and isinstance(self.variables[ident], FunctionValue):
+                rtype, value = self.DoCallFun(act, ident)
+                return value
+
+
+            elif ident not in self.variables or isinstance(self.variables[ident], tuple) and self.variables[ident][0] != 'i':
                 self.Error(f"Undefined global {ident}")
-            if act[0]:
+            if act[0] and isinstance(self.variables[ident], tuple):
                 # asign the left value to the value of the variable of the name inside of ident
                 left = self.variables[ident][1]
         return left
@@ -274,8 +291,6 @@ class Interpreter:
             s += self.String(act)
         return s
 
-    
-
     def Expression(self, act) -> tuple[str, ExprValue]:
         copypc = self.pc
 
@@ -287,7 +302,12 @@ class Interpreter:
         # if the next token is a string literal, or 
         # if the identifier is a string type variable
         # return the respective symbol for string an integer, 
-        if(self.Next() == '\"' or (ident in self.variables and self.variables[ident][0] == 's')):
+        if self.Next() == '"':
+            # return a symbol that corresponds to String Node
+            return ("s", self.StringExpression(act))
+        if (ident in self.variables
+             and isinstance(self.variables[ident], tuple) 
+             and self.variables[ident][0] == 's'):
             # return a symbol that corresponds to String Node
             return ("s", self.StringExpression(act))
         else:
@@ -326,23 +346,30 @@ class Interpreter:
                 self.Block([False])
 
 
-    def DoCallFun(self, act):
-        ident = self.TakeNextAlNum()
+    def DoCallFun(self, act, ident=""):
 
-        print(ident, self.variables[ident])
-        if ident not in self.variables or self.variables[ident][0] != 'fn':
-            self.Error(f"unknown function '{ident}'")
+        if not self.TakeNext('('):
+            self.Error("Missed '(' symbol.")
 
         ret = self.pc
-        self.pc = self.variables[ident][1]
+        self.pc = self.variables[ident].block_start
         self.Block(act)
-
-        # execute block as a subroutine
         self.pc = ret
+
+        if not self.TakeNext(')'):
+            self.Error("Missed ')' symbol.")
+
+        # If not return, default to 0
+        value = self.variables[ident].return_value
+        if value is None:
+            value = 0
+
+        rtype = "s" if isinstance(self.variables[ident].return_value, str) else "i"
+        return (rtype, value) 
 
     def ExecFun(self, ident, act):
         ret = self.pc
-        self.pc = self.variables[ident][1]
+        self.pc = self.variables[ident].block_start
         self.Block(act)
 
         # execute block as a subroutine
@@ -384,7 +411,8 @@ class Interpreter:
         block_start = self.pc - 1  # position of '{'
 
         self.scope = "function"
-        self.variables[ident] = ('fn', block_start, 0)
+        self.variables[ident] = FunctionValue(ident, block_start)
+        self.call_stack.append(ident)
         self.Block([False])
         self.scope = "global"
 
@@ -402,13 +430,15 @@ class Interpreter:
         if act[0] or ident not in self.variables:
             # assert initialization even if block is inactive
             # while re.match(r'[0-9]', varia)
+            if self.scope == "function":
+                func = self.call_stack[-1]
             self.variables[ident] = e
         
     def DoReturn(self, act):
         e = self.Expression(act)
         if self.scope == "function":
-            if act[0]:
-                print(self.TakeNextAlNum())
+            current_func = self.call_stack[-1]
+            self.variables[current_func].return_value = e[1]
 
 
     def DoRun(self, act):
@@ -513,7 +543,6 @@ class Interpreter:
                 "while":    self.DoWhile,
                 "break":    self.DoBreak,
 
-                "call":     self.DoCallFun,
                 "fnc":      self.DoFunDef,
                 "let":      self.DoAssign,
                 }
@@ -526,12 +555,14 @@ class Interpreter:
         # Get the next token without consuming it
         # Direct dictionary lookup 
         ident = self.TakeNextAlNum()
+
         if ident in keywords:
             keywords[ident](act)
             return
 
-        elif ident in self.variables and self.variables[ident][0] == 'fn':
-            self.ExecFun(ident, act)
+        if ident in self.variables and isinstance(self.variables[ident], FunctionValue):
+            self.DoCallFun(act, ident)
+            return
 
         self.Error("Unexpected expression or statement")
 
