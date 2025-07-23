@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from os import system
 from sys import argv
-import re
 import operator
 
 # VARIABLES:
@@ -21,6 +20,7 @@ ExprValue = str | int | float | None
 class BaseValue:
     def __init__(self, type_name: str):
         self.type_name = type_name
+        self.value = 0
 
 
 class IntValue(BaseValue):
@@ -87,10 +87,10 @@ class Interpreter:
         self.scopes.pop()
 
     def get_variable(self, name):
-        print(f"PC={self.pc}, Looking for variable '{name}' in scopes:")
-        for scope in reversed(self.scopes):
+        for i, scope in enumerate(reversed(self.scopes)):
             if name in scope:
-                return scope[name]
+                val = scope[name]
+                return val
         self.Error(f"Undefined variable '{name}'")
 
     # returns the current character while skipping over comments
@@ -139,7 +139,6 @@ class Interpreter:
 
     # Takes the next alpha numeric character
     # checks if the next token is a alpha,
-    # while the current token isnt a symbol, take it and increment the return by what taken
     def TakeNextAlNum(self) -> str:
         alnum = ""
         if self.Next().isalpha():
@@ -155,41 +154,46 @@ class Interpreter:
     def BooleanFactor(self, act: list[bool]) -> bool:
         inv = self.TakeNext('!')
         e = self.Expression(act)
-        b = e[1]
+        b = e.value
         # skip the white-spaces
         self.Next()
         # a single mathexpression may also serve as a boolean factor
-        if (e[0] == 'i'):
+        if (e.type_name == 'i'):
             # Extensively allows comparing numbers
             if self.TakeString("=="):
                 right = self.MathExpression(act)
-                if isinstance(b, (int, float)) and isinstance(right, (int, float)):
+                if isinstance(b, (int, float)) and isinstance(
+                        right, (int, float)):
                     b = (b == right)
                 else:
                     self.Error("Invalid types for '==' comparison")
             if self.TakeString("!="):
                 right = self.MathExpression(act)
-                if isinstance(b, (int, float)) and isinstance(right, (int, float)):
+                if isinstance(b, (int, float)) and isinstance(
+                        right, (int, float)):
                     b = (b != right)
                 else:
                     self.Error("Invalid types for '!=' comparison")
             if self.TakeString("<="):
                 right = self.MathExpression(act)
-                if isinstance(b, (int, float)) and isinstance(right, (int, float)):
+                if isinstance(b, (int, float)) and isinstance(
+                        right, (int, float)):
                     b = (b <= right)
                 else:
                     self.Error("Invalid types for '<=' comparison")
 
             if self.TakeString(">="):
                 right = self.MathExpression(act)
-                if isinstance(b, (int, float)) and isinstance(right, (int, float)):
+                if isinstance(b, (int, float)) and isinstance(
+                        right, (int, float)):
                     b = (b >= right)
                 else:
                     self.Error("Invalid types for '>=' comparison")
 
             if self.TakeString(">"):
                 right = self.MathExpression(act)
-                if isinstance(b, (int, float)) and isinstance(right, (int, float)):
+                if isinstance(b, (int, float)) and isinstance(
+                        right, (int, float)):
                     b = (b > right)
                 else:
                     self.Error("Invalid types for '>' comparison")
@@ -231,22 +235,15 @@ class Interpreter:
             if not self.TakeNext(')'):
                 self.Error("Missed symbol ')'")
         elif self.Next().isdigit():
-            # While the current token is digit increment the `m` variable and making sure
-            # it aligns well with base10 and by converting the taken token value into python integer,
-            # and adding them to `m` while also converting it to a `real` integer from `ascii`
             while self.Look().isdigit():
                 left = 10 * left + ord(self.Take()) - ord('0')
         else:
             ident = self.TakeNextAlNum()
             # If the ident is not inside the symbol table,
-            # or if the variable named by the value of `ident` type is not of number,
-            # returns an error using the intepreters main error handler.
             if not ident:
                 self.Error("expected a name")
 
-            # Try to get the variable from any scope
             value = self.get_variable(ident)
-
             if isinstance(value, FunctionValue):
                 rtype, value = self.DoCallFun(act, ident)
                 return value
@@ -254,7 +251,6 @@ class Interpreter:
             elif not isinstance(value, tuple) and value[0] != 'i':
                 self.Error(f"Undefined global {ident}")
             if act[0]:
-                # asign the left value to the value of the variable of the name inside of ident
                 left = value[1]
         return left
 
@@ -282,13 +278,9 @@ class Interpreter:
 
         # Get the left token value
         left = self.MathTerm(act)
-        # If the leading is minus, negate the left token value and assign it as the new value of the left token
         if c == '-':
             left = -left
         # While the next token is a + and - sign,
-        # take the next token apart from the previous token, and assign it to `c` as the operator
-        # then get the right hand side value
-        # Do calculations in each sign by adding or subtracting the value of `left` token and `right` token
         while self.IsAddOp(self.Next()):
             c = self.Take()
             right = self.MathTerm(act)
@@ -302,34 +294,21 @@ class Interpreter:
 
     def String(self, act: list[bool]) -> str:
         s = ""
-        # is it a literal string?
-        # Check if the next token is a '"'
         if self.TakeNext('\"'):
-            # While the next token isn't a '"', parse it and increment the `s` as it needs to,
-            # or returns an error if it can't find the last '"'.
             while not self.TakeString("\""):
                 if self.Look() == '\0':
-                    # If it finds a null terminator already, then return a error about the unexpected eof.
                     self.Error("unexpected EOF")
                 if self.TakeString("\\n"):
-                    # if the next token is a newline character, add the symbol '\n' to the return `s` variable
                     s += '\n'
                 if self.TakeString("\\t"):
-                    # if the next token is a tab character, add the symbol '\t' to the return `s` variable
                     s += '\t'
                 else:
-                    # if the next token is not a newline, tab, or an eof, take the next token and add it to the `s` value
                     s += self.Take()
         else:
-            # if it isn't a literal string, get the identifier from the lexer.
             ident = self.TakeNextAlNum()
 
-            # Try to get the variable from any scope
             value = self.get_variable(ident)
-            # then check if the identifier found is in the symbol table,
-            # and if the type of the identifier is a string,
             if value[0] == 's':
-                # if so then assign the value of the identifier to the `s` variable return.
                 s = value[1]
             else:
                 # else returns an error that it isn't a string.
@@ -344,44 +323,43 @@ class Interpreter:
             s += self.String(act)
         return s
 
-    def Expression(self, act) -> tuple[str, ExprValue]:
+    def Expression(self, act) -> BaseValue:
         copypc = self.pc
-        ident = self.TakeNextAlNum()
-        self.pc = copypc
 
         # If the next token is a string literal
         if self.Next() == '"':
-            return ("s", self.StringExpression(act))
+            return StringValue(self.StringExpression(act))
 
         # If the next token is a digit, parse as a number
         if self.Next().isdigit():
-            return ("i", self.MathExpression(act))
+            expr = self.MathExpression(act)
+            if isinstance(expr, int):
+                return IntValue(expr)
+            elif isinstance(expr, float):
+                return FloatValue(expr)
 
         # If the next token is an identifier, check if it's a string variable
         ident = self.TakeNextAlNum()
         if ident:
-            value = self.get_variable(ident)
+            val = self.get_variable(ident)
             # Check for function call
-            if isinstance(value, FunctionValue):
+            if isinstance(val, FunctionValue):
+                print(self.Next())
                 rtype, result = self.DoCallFun(act, ident)
-                return (rtype, result)
-            # Check for string variable
-            elif isinstance(value, tuple):
-                # value (type, value)
-
-                vtype, val = value
-                if vtype == "s":
-                    return ("s", val)
-                elif vtype == "i" or vtype == "f":
-                    return (vtype, val)
+                # Wrap result in appropriate BaseValue subclass
+                if rtype == "i":
+                    return IntValue(result)
+                elif rtype == "s":
+                    return StringValue(str(result))
                 else:
-                    self.Error(f"Unsupported variable type '{vtype}'")
+                    self.Error(f"Unknown return type '{rtype}'")
             else:
-                self.Error(f"Variable '{ident}' has invalid type")
+                return val
 
         self.pc = copypc
         # If not a string, digit, or identifier, treat as number expression
-        return ("i", self.MathExpression(act))
+        expr = self.MathExpression(act)
+        return IntValue(expr) if isinstance(expr, int) else FloatValue(expr)
 
     def DoWhile(self, act):
         local = [act[0]]
@@ -416,7 +394,6 @@ class Interpreter:
                 self.Block([False])
 
     def DoCallFun(self, act, ident=""):
-        print(f"DoCallFun called for function '{ident}'")
 
         if not self.TakeNext('('):
             self.Error("Missed '(' symbol.")
@@ -424,13 +401,11 @@ class Interpreter:
         ret = self.pc
 
         func = self.get_variable(ident)
-        print(f"Function block start at pc={func.block_start}")
         self.pc = func.block_start
         value = 0
 
         print("About to push scope")
         self.push_scope()
-        print(f"Scope pushed, current scopes count: {len(self.scopes)}")
 
         try:
             self.Block(act)
@@ -439,7 +414,6 @@ class Interpreter:
 
         print("About to pop scope")
         self.pop_scope()
-        print(f"Scope popped, current scopes count: {len(self.scopes)}")
 
         self.pc = ret
 
@@ -449,33 +423,17 @@ class Interpreter:
         rtype = "s" if isinstance(func.return_value, str) else "i"
         return (rtype, value)
 
-    def match(self, value, char):
-        global pc
-        while re.match(r'[a-zA-Z]', char):
-            value += char
-            pc += 1
-            char = self.source[self.pc]
-        return value
-
-    def newValue(self, value, char):
-        global pc
-        pc += 2
-        value2 = self.match(value, char)
-        return value2
-
     def DoFunDef(self, act):
         ident = self.TakeNextAlNum()
 
         if ident == "":
             self.Error("<name> expected.")
 
-        # Check for the start of  the  parenthesis that would contain parameters
         if not self.TakeNext("("):
             self.Error("Missed symbol '('")
 
         # TODO: Parse parameters here....
 
-        # Check for the start of  the  parenthesis that would contain parameters
         if not self.TakeNext(")"):
             self.Error("Missed symbol ')'")
 
@@ -489,32 +447,26 @@ class Interpreter:
         self.Block([False])
 
     def DoAssign(self, act):
-        # Get the assignee name for the variable
         ident = self.TakeNextAlNum()
-
-        # Checks if the ident is empty or the next char isnt '=', as it is expects, if it is not so then return an error.
         if not self.TakeNext("=") or ident == "":
             self.Error("<expr> expected")
 
-        # parse new expression after assign
-        e = self.Expression(act)
 
-        if act[0] == True:
-            # assert initialization even if block is inactive
-            # while re.match(r'[0-9]', varia)
-            self.variables[ident] = e
+        val = self.Expression(act)
+        if act[0]:
+            self.variables[ident] = val
 
     def DoReturn(self, act):
         e = self.Expression(act)
         if act[0]:
-            raise ReturnException(e[1])
+            raise ReturnException(e.value)
 
     def DoRun(self, act):
         # ident = self.TakeNextAlNum()
 
         e = self.Expression(act)
 
-        system(e[1] if isinstance(e[1], str) else "")
+        system(e.value if isinstance(e.value, str) else "")
 
         # if act[0] or ident not in variable:
         #     variable[ident] = e
@@ -540,7 +492,7 @@ class Interpreter:
                 self.Error("Missed symbol ')'")
 
             if act[0]:
-                print(f"{self.LookupType(e[0])}:   {e[1]}")
+                print(f"{self.LookupType(e.type_name)}:   {e.value}")
             if not self.TakeNext(','):
                 return
 
@@ -570,8 +522,8 @@ class Interpreter:
         e, line = self.Expression(act), str(self.source[:self.pc].count("\n"))
 
         try:
-            if isinstance(e[1], str):
-                print(f"mince: " + ":" + str(line) + ":" + " " + e[1])
+            if isinstance(e.value, str):
+                print(f"mince: {str(line)}: {e.value}")
             exit(1)
         except TypeError as e:
             raise e
@@ -580,58 +532,61 @@ class Interpreter:
         #     variable[ident] = e
 
     def GetMinimum(self, act):
-        value = [self.Expression(act) for _ in range(5)]
+        value = [self.Expression(act).value for _ in range(5)]
 
         res = min(value)
 
-        self.variables["min"] = ('i', res)
+        self.variables["min"] = IntValue(res)
 
     def GetMaximum(self, act):
 
-        value = [self.Expression(act) for _ in range(5)]
+        value = [self.Expression(act).value for _ in range(5)]
 
         res = max(value)
 
-        self.variables["max"] = ('i', res)
+        self.variables["max"] = IntValue(res)
 
     def Statement(self, act):
-        print(f"In Statement(): '{self.variables}'")
-
         keywords = {
-            "min":      self.GetMinimum,
-            "max":      self.GetMaximum,
-            "print":    self.DoPrint,
-            "return":   self.DoReturn,
-            "exec":     self.DoRun,
-            "panic":    self.DoError,
-
-            "while":    self.DoWhile,
-            "break":    self.DoBreak,
-
-            "fnc":      self.DoFunDef,
-            "let":      self.DoAssign,
-            "if":       self.DoIfElse,
+            "min": self.GetMinimum,
+            "max": self.GetMaximum,
+            "print": self.DoPrint,
+            "return": self.DoReturn,
+            "exec": self.DoRun,
+            "panic": self.DoError,
+            "while": self.DoWhile,
+            "break": self.DoBreak,
+            "fnc": self.DoFunDef,
+            "let": self.DoAssign,
+            "if": self.DoIfElse,
         }
 
-        # Skip ignored characters
         if self.Next() in self.ignored_chars:
             return
 
-        # Get the next token without consuming it
-        # Direct dictionary lookup
         ident = self.TakeNextAlNum()
 
+        if ident == "":
+            # no identifier, possibly some other statement, handle or error
+            self.Error("Expected statement or identifier")
+
+        # Handle keywords
         if ident in keywords:
             keywords[ident](act)
             return
+        else:
 
-        val = self.get_variable(ident)
-        print("Statement : ", val)
-        if isinstance(val, FunctionValue):
-            self.DoCallFun(act, ident)
-            return
+            # After keywords, check if it's a function call (next char is '(')
+            if self.Next() == '(':
+                val = self.get_variable(ident)
+                if isinstance(val, FunctionValue):
+                    self.DoCallFun(act, ident)
+                    return
+                else:
+                    self.Error(f"'{ident}' is not a function")
 
-        self.Error("Unexpected expression or statement")
+        # If not keyword or function call, error
+        self.Error(f"Unexpected statement or expression: {ident}")
 
     def Block(self, act):
         if self.TakeNext("{"):
@@ -656,7 +611,7 @@ class Interpreter:
 
 def run(interp: Interpreter):
     act = [True]
-    while interp.Next() != '\0':
+    while interp.pc < len(interp.source) and interp.source[interp.pc] != '\0':
         interp.Block(act)
 
 
