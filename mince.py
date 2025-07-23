@@ -9,14 +9,47 @@ pc = 0
 variable = {}
 mince_args = argv
 
+
 class ReturnException(Exception):
     def __init__(self, value):
         self.value = value
 
+
 ExprValue = str | int | float | None
 
-class FunctionValue:
+
+class BaseValue:
+    def __init__(self, type_name: str):
+        self.type_name = type_name
+
+
+class IntValue(BaseValue):
+    def __init__(self, value: int):
+        super().__init__('i')
+        self.value = value
+
+
+class StringValue(BaseValue):
+    def __init__(self, value: str):
+        super().__init__('s')
+        self.value = value
+
+
+class FloatValue(BaseValue):
+    def __init__(self, value: float):
+        super().__init__('f')
+        self.value = value
+
+
+class BoolValue(BaseValue):
+    def __init__(self, value: bool):
+        super().__init__('b')
+        self.value = value
+
+
+class FunctionValue(BaseValue):
     def __init__(self, name: str, block_start: int, params=None):
+        super().__init__('fn')
         self.name = name
         self.block_start: int = block_start
         self.params = params or []
@@ -29,7 +62,7 @@ class Interpreter:
         self.source = source
         self.pc = 0
         # self.variables = {}
-        self.ignored_chars = [' ', '\r', '\n', '\t' ]
+        self.ignored_chars = [' ', '\r', '\n', '\t']
         self.scope = "global"
         self.scopes = [{}]
         self.on_repl = True
@@ -38,7 +71,7 @@ class Interpreter:
         self.call_stack = []
 
         self.types = {
-                "s": "string", "i": "int", "f": "float", "b": "bool", "fn": "function", "v": "void"
+            "s": "string", "i": "int", "f": "float", "b": "bool", "fn": "function", "v": "void"
         }
 
     @property
@@ -46,12 +79,15 @@ class Interpreter:
         return self.scopes[-1]
 
     def push_scope(self):
+        print("Pushing new scope")
         self.scopes.append({})
 
     def pop_scope(self):
+        print("Popping scope")
         self.scopes.pop()
 
     def get_variable(self, name):
+        print(f"PC={self.pc}, Looking for variable '{name}' in scopes:")
         for scope in reversed(self.scopes):
             if name in scope:
                 return scope[name]
@@ -96,13 +132,13 @@ class Interpreter:
         else:
             return False
 
-
     # recognizers
+
     def IsAddOp(self, c: str) -> bool: return (c == '+' or c == '-')
     def IsMulOp(self, c: str) -> bool: return (c == '*' or c == '/')
 
-    # Takes the next alpha numeric character 
-    # checks if the next token is a alpha, 
+    # Takes the next alpha numeric character
+    # checks if the next token is a alpha,
     # while the current token isnt a symbol, take it and increment the return by what taken
     def TakeNextAlNum(self) -> str:
         alnum = ""
@@ -113,7 +149,7 @@ class Interpreter:
 
     # --------------------------------------------------------------------------------------------------
 
-    def LookupType(self, type_alias: str): 
+    def LookupType(self, type_alias: str):
         return self.types[type_alias]
 
     def BooleanFactor(self, act: list[bool]) -> bool:
@@ -168,26 +204,23 @@ class Interpreter:
         # always returns False if inactive
         return act[0] and (b != inv)
 
-
     def BooleanTerm(self, act: list[bool]) -> bool:
         b = self.BooleanFactor(act)
-        # Checks for the `and` logic operator and 
+        # Checks for the `and` logic operator and
         # pass the logics into the BooleanFactor for strings and numbers.
         while self.TakeString('&&'):
             # logical and corresponds to multiplication
             b = b & self.BooleanFactor(act)
         return b
 
-
     def BooleanExpression(self, act) -> bool:
         b = self.BooleanTerm(act)
-        # Checks for the `or` logic operator and 
+        # Checks for the `or` logic operator and
         # pass the logics into the BooleanFactor for strings and numbers.
         while self.TakeString('||'):
             # logical or corresponds to addition
             b = b | self.BooleanTerm(act)
         return b
-
 
     def MathFactor(self, act) -> int | float:
         left = 0
@@ -198,7 +231,7 @@ class Interpreter:
             if not self.TakeNext(')'):
                 self.Error("Missed symbol ')'")
         elif self.Next().isdigit():
-            # While the current token is digit increment the `m` variable and making sure 
+            # While the current token is digit increment the `m` variable and making sure
             # it aligns well with base10 and by converting the taken token value into python integer,
             # and adding them to `m` while also converting it to a `real` integer from `ascii`
             while self.Look().isdigit():
@@ -207,7 +240,7 @@ class Interpreter:
             ident = self.TakeNextAlNum()
             # If the ident is not inside the symbol table,
             # or if the variable named by the value of `ident` type is not of number,
-            # returns an error using the intepreters main error handler. 
+            # returns an error using the intepreters main error handler.
             if not ident:
                 self.Error("expected a name")
 
@@ -218,14 +251,12 @@ class Interpreter:
                 rtype, value = self.DoCallFun(act, ident)
                 return value
 
-
             elif not isinstance(value, tuple) and value[0] != 'i':
                 self.Error(f"Undefined global {ident}")
             if act[0]:
                 # asign the left value to the value of the variable of the name inside of ident
                 left = value[1]
         return left
-
 
     def MathTerm(self, act) -> int | float:
         # Get the left token value from mathfactor
@@ -240,7 +271,6 @@ class Interpreter:
                 # division
                 left = left / right
         return left
-
 
     def MathExpression(self, act) -> int | float:
         # check for an optional leading sign
@@ -270,7 +300,6 @@ class Interpreter:
                 left = left - right
         return left
 
-
     def String(self, act: list[bool]) -> str:
         s = ""
         # is it a literal string?
@@ -283,10 +312,10 @@ class Interpreter:
                     # If it finds a null terminator already, then return a error about the unexpected eof.
                     self.Error("unexpected EOF")
                 if self.TakeString("\\n"):
-                    # if the next token is a newline character, add the symbol '\n' to the return `s` variable 
+                    # if the next token is a newline character, add the symbol '\n' to the return `s` variable
                     s += '\n'
                 if self.TakeString("\\t"):
-                    # if the next token is a tab character, add the symbol '\t' to the return `s` variable 
+                    # if the next token is a tab character, add the symbol '\t' to the return `s` variable
                     s += '\t'
                 else:
                     # if the next token is not a newline, tab, or an eof, take the next token and add it to the `s` value
@@ -297,7 +326,7 @@ class Interpreter:
 
             # Try to get the variable from any scope
             value = self.get_variable(ident)
-            # then check if the identifier found is in the symbol table, 
+            # then check if the identifier found is in the symbol table,
             # and if the type of the identifier is a string,
             if value[0] == 's':
                 # if so then assign the value of the identifier to the `s` variable return.
@@ -307,7 +336,6 @@ class Interpreter:
                 self.Error("not a string")
 
         return s
-
 
     def StringExpression(self, act: list[bool]) -> str:
         s = self.String(act)
@@ -333,15 +361,27 @@ class Interpreter:
         ident = self.TakeNextAlNum()
         if ident:
             value = self.get_variable(ident)
-            if isinstance(value, tuple) and value[0] == 's':
-                return ("s", self.StringExpression(act))
+            # Check for function call
+            if isinstance(value, FunctionValue):
+                rtype, result = self.DoCallFun(act, ident)
+                return (rtype, result)
+            # Check for string variable
+            elif isinstance(value, tuple):
+                # value (type, value)
+
+                vtype, val = value
+                if vtype == "s":
+                    return ("s", val)
+                elif vtype == "i" or vtype == "f":
+                    return (vtype, val)
+                else:
+                    self.Error(f"Unsupported variable type '{vtype}'")
             else:
-                # Not a string variable, treat as number
-                self.pc = copypc  # rewind to parse as MathExpression
-                return ("i", self.MathExpression(act))
-        else:
-            # If not a string, digit, or identifier, treat as number expression
-            return ("i", self.MathExpression(act))
+                self.Error(f"Variable '{ident}' has invalid type")
+
+        self.pc = copypc
+        # If not a string, digit, or identifier, treat as number expression
+        return ("i", self.MathExpression(act))
 
     def DoWhile(self, act):
         local = [act[0]]
@@ -369,13 +409,14 @@ class Interpreter:
 
         # process else block?
         if self.TakeString("else"):
+            # process if block?
             if act[0] and not b:
                 self.Block(act)
             else:
                 self.Block([False])
 
-
     def DoCallFun(self, act, ident=""):
+        print(f"DoCallFun called for function '{ident}'")
 
         if not self.TakeNext('('):
             self.Error("Missed '(' symbol.")
@@ -383,23 +424,30 @@ class Interpreter:
         ret = self.pc
 
         func = self.get_variable(ident)
+        print(f"Function block start at pc={func.block_start}")
         self.pc = func.block_start
         value = 0
 
+        print("About to push scope")
         self.push_scope()
+        print(f"Scope pushed, current scopes count: {len(self.scopes)}")
+
         try:
             self.Block(act)
         except ReturnException as re:
             value = re.value
 
+        print("About to pop scope")
         self.pop_scope()
+        print(f"Scope popped, current scopes count: {len(self.scopes)}")
+
         self.pc = ret
 
         if not self.TakeNext(')'):
             self.Error("Missed ')' symbol.")
 
         rtype = "s" if isinstance(func.return_value, str) else "i"
-        return (rtype, value) 
+        return (rtype, value)
 
     def match(self, value, char):
         global pc
@@ -425,12 +473,12 @@ class Interpreter:
         if not self.TakeNext("("):
             self.Error("Missed symbol '('")
 
-        #TODO: Parse parameters here.... 
+        # TODO: Parse parameters here....
 
         # Check for the start of  the  parenthesis that would contain parameters
         if not self.TakeNext(")"):
             self.Error("Missed symbol ')'")
-        
+
         if self.Next() != "{":
             self.Error("Missed symbol '{'")
 
@@ -441,28 +489,25 @@ class Interpreter:
         self.Block([False])
 
     def DoAssign(self, act):
-        # Get the assignee name for the variable 
+        # Get the assignee name for the variable
         ident = self.TakeNextAlNum()
 
         # Checks if the ident is empty or the next char isnt '=', as it is expects, if it is not so then return an error.
         if not self.TakeNext("=") or ident == "":
             self.Error("<expr> expected")
 
-        # parse new expression after assign 
+        # parse new expression after assign
         e = self.Expression(act)
 
         if act[0] == True:
             # assert initialization even if block is inactive
             # while re.match(r'[0-9]', varia)
-            # print("Assigning", ident, "to", e, "in scope", id(self.variables)) 
             self.variables[ident] = e
-            # print("Scopes after assign:", self.scopes)
-        
+
     def DoReturn(self, act):
         e = self.Expression(act)
         if act[0]:
             raise ReturnException(e[1])
-
 
     def DoRun(self, act):
         # ident = self.TakeNextAlNum()
@@ -474,7 +519,6 @@ class Interpreter:
         # if act[0] or ident not in variable:
         #     variable[ident] = e
 
-
     def DoBreak(self, act):
         if self.scope == "loop":
             if act[0]:
@@ -483,14 +527,12 @@ class Interpreter:
         else:
             self.Error("<break> not inside a loop")
 
-
     def DoPrint(self, act):
         # process comma-separated arguments
         while True:
 
             if not self.TakeString("("):
                 self.Error("Missed symbol '('")
-                
 
             e = self.Expression(act)
 
@@ -502,19 +544,18 @@ class Interpreter:
             if not self.TakeNext(','):
                 return
 
-
     def IDMD(self):
         ident = self.TakeNextAlNum()
 
         self.Next()
 
         symbols = {
-                "+=": lambda a, b: operator.iadd(a, b),
-                "-=": lambda a, b: operator.isub(a, b),
-                "*=": lambda a, b: operator.imul(a, b),
-                "/=": lambda a, b: operator.ifloordiv(a, b),
-                "%=": lambda a, b: operator.imod(a, b),
-                }
+            "+=": lambda a, b: operator.iadd(a, b),
+            "-=": lambda a, b: operator.isub(a, b),
+            "*=": lambda a, b: operator.imul(a, b),
+            "/=": lambda a, b: operator.ifloordiv(a, b),
+            "%=": lambda a, b: operator.imod(a, b),
+        }
 
         if ident != "":
             v = ""
@@ -554,30 +595,30 @@ class Interpreter:
         self.variables["max"] = ('i', res)
 
     def Statement(self, act):
+        print(f"In Statement(): '{self.variables}'")
 
         keywords = {
-                "min":      self.GetMinimum,
-                "max":      self.GetMaximum,
-                "print":    self.DoPrint,
-                "return":   self.DoReturn,
-                "exec":     self.DoRun,
-                "panic":    self.DoError,
+            "min":      self.GetMinimum,
+            "max":      self.GetMaximum,
+            "print":    self.DoPrint,
+            "return":   self.DoReturn,
+            "exec":     self.DoRun,
+            "panic":    self.DoError,
 
-                "if":       self.DoIfElse,
-                "while":    self.DoWhile,
-                "break":    self.DoBreak,
+            "while":    self.DoWhile,
+            "break":    self.DoBreak,
 
-                "fnc":      self.DoFunDef,
-                "let":      self.DoAssign,
-                }
+            "fnc":      self.DoFunDef,
+            "let":      self.DoAssign,
+            "if":       self.DoIfElse,
+        }
 
-            
         # Skip ignored characters
         if self.Next() in self.ignored_chars:
             return
 
         # Get the next token without consuming it
-        # Direct dictionary lookup 
+        # Direct dictionary lookup
         ident = self.TakeNextAlNum()
 
         if ident in keywords:
@@ -585,6 +626,7 @@ class Interpreter:
             return
 
         val = self.get_variable(ident)
+        print("Statement : ", val)
         if isinstance(val, FunctionValue):
             self.DoCallFun(act, ident)
             return
@@ -598,23 +640,25 @@ class Interpreter:
         else:
             self.Statement(act)
 
-
     def Error(self, text: str):
-        s, e = self.source[:self.pc].rfind("\n") + 1, self.source.find("\n", self.pc)
+        s, e = self.source[:self.pc].rfind(
+            "\n") + 1, self.source.find("\n", self.pc)
 
         msg = ("mince:" + mince_args[1] + ":" +
-            str(self.source[:self.pc].count("\n")+1) + ": " +
-            text + " near " + "\n\t'" + self.source[s:self.pc] +
-            "_" + self.source[self.pc:e] + "'")
+               str(self.source[:self.pc].count("\n")+1) + ": " +
+               text + " near " + "\n\t'" + self.source[s:self.pc] +
+               "_" + self.source[self.pc:e] + "'")
 
         self.hadError = True
         print(msg)
         exit(1)
 
+
 def run(interp: Interpreter):
     act = [True]
     while interp.Next() != '\0':
         interp.Block(act)
+
 
 def runFile(interp, path: str):
     try:
@@ -628,6 +672,7 @@ def runFile(interp, path: str):
         print("ERROR: Can't find source file \'" + path + "\'.")
         exit(1)
     run(interp)
+
 
 if __name__ == '__main__':
     interp = Interpreter("")
