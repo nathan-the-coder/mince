@@ -2,59 +2,13 @@
 from os import system
 from sys import argv
 import operator
+from value import BaseValue, IntValue, FloatValue, StringValue, FunctionValue
+from exception import ReturnException
 
 # VARIABLES:
 pc = 0
 variable = {}
 mince_args = argv
-
-
-class ReturnException(Exception):
-    def __init__(self, value):
-        self.value = value
-
-
-ExprValue = str | int | float | None
-
-
-class BaseValue:
-    def __init__(self, type_name: str):
-        self.type_name = type_name
-        self.value = 0
-
-
-class IntValue(BaseValue):
-    def __init__(self, value: int):
-        super().__init__('i')
-        self.value = value
-
-
-class StringValue(BaseValue):
-    def __init__(self, value: str):
-        super().__init__('s')
-        self.value = value
-
-
-class FloatValue(BaseValue):
-    def __init__(self, value: float):
-        super().__init__('f')
-        self.value = value
-
-
-class BoolValue(BaseValue):
-    def __init__(self, value: bool):
-        super().__init__('b')
-        self.value = value
-
-
-class FunctionValue(BaseValue):
-    def __init__(self, name: str, block_start: int, params=None):
-        super().__init__('fn')
-        self.name = name
-        self.block_start: int = block_start
-        self.params = params or []
-        self.return_value: int = 0
-        self.variables = {}  # function-local variables
 
 
 class Interpreter:
@@ -65,14 +19,9 @@ class Interpreter:
         self.ignored_chars = [' ', '\r', '\n', '\t']
         self.scope = "global"
         self.scopes = [{}]
-        self.on_repl = True
         self.hadError = False
 
         self.call_stack = []
-
-        self.types = {
-            "s": "string", "i": "int", "f": "float", "b": "bool", "fn": "function", "v": "void"
-        }
 
     @property
     def variables(self):
@@ -147,9 +96,6 @@ class Interpreter:
         return alnum
 
     # --------------------------------------------------------------------------------------------------
-
-    def LookupType(self, type_alias: str):
-        return self.types[type_alias]
 
     def BooleanFactor(self, act: list[bool]) -> bool:
         inv = self.TakeNext('!')
@@ -451,7 +397,6 @@ class Interpreter:
         if not self.TakeNext("=") or ident == "":
             self.Error("<expr> expected")
 
-
         val = self.Expression(act)
         if act[0]:
             self.variables[ident] = val
@@ -492,7 +437,7 @@ class Interpreter:
                 self.Error("Missed symbol ')'")
 
             if act[0]:
-                print(f"{self.LookupType(e.type_name)}:   {e.value}")
+                print(f"{e.value}")
             if not self.TakeNext(','):
                 return
 
@@ -608,11 +553,10 @@ class Interpreter:
         print(msg)
         exit(1)
 
-
-def run(interp: Interpreter):
-    act = [True]
-    while interp.pc < len(interp.source) and interp.source[interp.pc] != '\0':
-        interp.Block(act)
+    def run(self):
+        act = [True]
+        while self.pc < len(self.source) and self.source[self.pc] != '\0':
+            self.Block(act)
 
 
 def runFile(interp, path: str):
@@ -620,13 +564,12 @@ def runFile(interp, path: str):
 
         f = open(path, 'r')
         interp.source = f.read() + '\0'
-        interp.on_repl = False
 
         f.close()
     except FileNotFoundError:
         print("ERROR: Can't find source file \'" + path + "\'.")
         exit(1)
-    run(interp)
+    interp.run(interp)
 
 
 if __name__ == '__main__':
