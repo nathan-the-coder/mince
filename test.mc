@@ -1,6 +1,6 @@
 
 fnc add() {
-  let x = 5
+  let x = 2
   if x == 2 {
     print(1)
   }

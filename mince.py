@@ -28,11 +28,9 @@ class Interpreter:
         return self.scopes[-1]
 
     def push_scope(self):
-        print("Pushing new scope")
         self.scopes.append({})
 
     def pop_scope(self):
-        print("Popping scope")
         self.scopes.pop()
 
     def get_variable(self, name):
@@ -96,7 +94,6 @@ class Interpreter:
         return alnum
 
     # --------------------------------------------------------------------------------------------------
-
     def BooleanFactor(self, act: list[bool]) -> bool:
         inv = self.TakeNext('!')
         e = self.Expression(act)
@@ -290,7 +287,6 @@ class Interpreter:
             val = self.get_variable(ident)
             # Check for function call
             if isinstance(val, FunctionValue):
-                print(self.Next())
                 rtype, result = self.DoCallFun(act, ident)
                 # Wrap result in appropriate BaseValue subclass
                 if rtype == "i":
@@ -350,7 +346,6 @@ class Interpreter:
         self.pc = func.block_start
         value = 0
 
-        print("About to push scope")
         self.push_scope()
 
         try:
@@ -358,7 +353,6 @@ class Interpreter:
         except ReturnException as re:
             value = re.value
 
-        print("About to pop scope")
         self.pop_scope()
 
         self.pc = ret
@@ -397,9 +391,13 @@ class Interpreter:
         if not self.TakeNext("=") or ident == "":
             self.Error("<expr> expected")
 
-        val = self.Expression(act)
         if act[0]:
+            val = self.Expression(act)
             self.variables[ident] = val
+        else:
+            # still evaluates expr to preserve parser state, but discard result
+            _ = self.Expression([False])
+            self.variables[ident] = IntValue(0)
 
     def DoReturn(self, act):
         e = self.Expression(act)
@@ -492,18 +490,22 @@ class Interpreter:
         self.variables["max"] = IntValue(res)
 
     def Statement(self, act):
+        self.Next()
+        if self.pc >= len(self.source) or self.source[self.pc] == '\0':
+            return  # Safely skip EOF
+
         keywords = {
-            "min": self.GetMinimum,
-            "max": self.GetMaximum,
-            "print": self.DoPrint,
-            "return": self.DoReturn,
-            "exec": self.DoRun,
-            "panic": self.DoError,
+            "let": self.DoAssign,
+            "fn": self.DoFunDef,
+            "if": self.DoIfElse,
             "while": self.DoWhile,
             "break": self.DoBreak,
-            "fnc": self.DoFunDef,
-            "let": self.DoAssign,
-            "if": self.DoIfElse,
+            "return": self.DoReturn,
+            "out": self.DoPrint,
+            "fail": self.DoError,
+            "max": self.GetMaximum,
+            "min": self.GetMinimum,
+            "exec": self.DoRun,
         }
 
         if self.Next() in self.ignored_chars:
@@ -544,6 +546,9 @@ class Interpreter:
         s, e = self.source[:self.pc].rfind(
             "\n") + 1, self.source.find("\n", self.pc)
 
+        if e == -1:  # No newline after PC
+            e = len(self.source)
+
         msg = ("mince:" + mince_args[1] + ":" +
                str(self.source[:self.pc].count("\n")+1) + ": " +
                text + " near " + "\n\t'" + self.source[s:self.pc] +
@@ -555,7 +560,10 @@ class Interpreter:
 
     def run(self):
         act = [True]
-        while self.pc < len(self.source) and self.source[self.pc] != '\0':
+        while self.pc < len(self.source):
+            self.Next()
+            if self.source[self.pc] == '\0':
+                break
             self.Block(act)
 
 
@@ -569,7 +577,7 @@ def runFile(interp, path: str):
     except FileNotFoundError:
         print("ERROR: Can't find source file \'" + path + "\'.")
         exit(1)
-    interp.run(interp)
+    interp.run()
 
 
 if __name__ == '__main__':
