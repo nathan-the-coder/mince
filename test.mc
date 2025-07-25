@@ -2,16 +2,16 @@
 fnc add() {
   let x = 2
   if x == 2 {
-    print(1)
+    out(1)
   }
   return 5
 }
 
 let test = add()
-print(test)
+out(test)
 
 fnc dep() {
-  print(1)
+  out(1)
 }
 
 dep()

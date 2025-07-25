@@ -496,7 +496,7 @@ class Interpreter:
 
         keywords = {
             "let": self.DoAssign,
-            "fn": self.DoFunDef,
+            "fnc": self.DoFunDef,
             "if": self.DoIfElse,
             "while": self.DoWhile,
             "break": self.DoBreak,
